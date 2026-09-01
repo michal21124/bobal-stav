@@ -1,0 +1,17 @@
+{
+  "name": "Bobal Stav s.r.o.",
+  "short_name": "Bobal Stav",
+  "description": "Stavební a rekonstrukční práce v Praze a okolí.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#101110",
+  "theme_color": "#101110",
+  "icons": [
+    {
+      "src": "/bobal-stav-logo.png",
+      "sizes": "3780x1392",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
