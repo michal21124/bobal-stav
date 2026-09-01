@@ -145,11 +145,45 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AdminSummary"
+  /storage/uploads:
+    post:
+      operationId: uploadGalleryImage
+      tags: [storage]
+      summary: Upload a gallery image
+      description: Authenticated raw image bytes. Set Content-Type to image/jpeg, image/png, or image/webp.
+      requestBody:
+        required: true
+        content:
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+          image/png:
+            schema:
+              type: string
+              format: binary
+          image/webp:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "201":
+          description: Stored object path
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadImageResponse"
+        "400":
+          description: Invalid image metadata
+        "401":
+          description: Admin authentication required
   /storage/uploads/request-url:
     post:
       operationId: requestImageUploadUrl
       tags: [storage]
-      summary: Request a presigned image upload URL
+      summary: Legacy presigned image upload URL
+      deprecated: true
+      description: Legacy Replit-only endpoint retained for the old API artifact. It is not implemented by the Netlify Function; use `/storage/uploads`.
       requestBody:
         required: true
         content:
@@ -163,10 +197,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RequestUploadUrlResponse"
-        "400":
-          description: Invalid image metadata
-        "401":
-          description: Admin authentication required
   /storage/objects/{path}:
     get:
       operationId: getStoredImage
@@ -335,12 +365,17 @@ components:
           type: number
         lastUpdated:
           type: string
-    RequestUploadUrlBody:
+    UploadImageResponse:
       type: object
       required:
-        - name
-        - size
-        - contentType
+        - objectPath
+      properties:
+        objectPath:
+          type: string
+          pattern: "^/objects/"
+    RequestUploadUrlBody:
+      type: object
+      required: [name, size, contentType]
       properties:
         name:
           type: string
@@ -355,10 +390,7 @@ components:
           enum: [image/jpeg, image/png, image/webp]
     RequestUploadUrlResponse:
       type: object
-      required:
-        - uploadURL
-        - objectPath
-        - metadata
+      required: [uploadURL, objectPath, metadata]
       properties:
         uploadURL:
           type: string
