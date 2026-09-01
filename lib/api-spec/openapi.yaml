@@ -1,0 +1,371 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: content
+    description: Public company content and site configuration
+  - name: gallery
+    description: Project gallery management
+  - name: admin
+    description: Admin dashboard summaries
+  - name: storage
+    description: Protected image upload and public image serving
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /content:
+    get:
+      operationId: getSiteContent
+      tags: [content]
+      summary: Get site content
+      responses:
+        "200":
+          description: Current bilingual company content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteContent"
+    patch:
+      operationId: updateSiteContent
+      tags: [content]
+      summary: Update site content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SiteContentUpdate"
+      responses:
+        "200":
+          description: Updated content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteContent"
+  /gallery:
+    get:
+      operationId: listGalleryItems
+      tags: [gallery]
+      summary: List gallery items
+      responses:
+        "200":
+          description: Gallery items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GalleryItem"
+    post:
+      operationId: createGalleryItem
+      tags: [gallery]
+      summary: Add a gallery item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GalleryItemInput"
+      responses:
+        "201":
+          description: Created gallery item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GalleryItem"
+  /gallery/{id}:
+    patch:
+      operationId: updateGalleryItem
+      tags: [gallery]
+      summary: Update a gallery item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GalleryItemUpdate"
+      responses:
+        "200":
+          description: Updated gallery item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GalleryItem"
+        "404":
+          description: Gallery item not found
+    delete:
+      operationId: deleteGalleryItem
+      tags: [gallery]
+      summary: Delete a gallery item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Gallery item deleted
+        "404":
+          description: Gallery item not found
+  /admin/summary:
+    get:
+      operationId: getAdminSummary
+      tags: [admin]
+      summary: Get admin dashboard summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSummary"
+  /storage/uploads/request-url:
+    post:
+      operationId: requestImageUploadUrl
+      tags: [storage]
+      summary: Request a presigned image upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestUploadUrlBody"
+      responses:
+        "200":
+          description: Presigned upload URL and object path
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestUploadUrlResponse"
+        "400":
+          description: Invalid image metadata
+        "401":
+          description: Admin authentication required
+  /storage/objects/{path}:
+    get:
+      operationId: getStoredImage
+      tags: [storage]
+      summary: Serve a stored gallery image
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Object path after the /objects/ prefix
+      responses:
+        "200":
+          description: Stored image bytes
+          content:
+            image/jpeg: {}
+            image/png: {}
+            image/webp: {}
+        "404":
+          description: Stored image not found
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    SiteContent:
+      type: object
+      required:
+        - companyName
+        - phone
+        - registrationNumber
+        - foundedDate
+        - address
+        - status
+        - services
+        - aboutCs
+        - aboutUk
+      properties:
+        companyName:
+          type: string
+        phone:
+          type: string
+        registrationNumber:
+          type: string
+        foundedDate:
+          type: string
+        address:
+          type: string
+        status:
+          type: string
+        services:
+          type: array
+          items:
+            type: string
+        aboutCs:
+          type: string
+        aboutUk:
+          type: string
+    SiteContentUpdate:
+      type: object
+      properties:
+        companyName:
+          type: string
+        phone:
+          type: string
+        registrationNumber:
+          type: string
+        foundedDate:
+          type: string
+        address:
+          type: string
+        status:
+          type: string
+        services:
+          type: array
+          items:
+            type: string
+        aboutCs:
+          type: string
+        aboutUk:
+          type: string
+    GalleryItem:
+      type: object
+      required:
+        - id
+        - titleCs
+        - titleUk
+        - category
+        - imageUrl
+        - location
+        - featured
+      properties:
+        id:
+          type: number
+        titleCs:
+          type: string
+        titleUk:
+          type: string
+        category:
+          type: string
+        imageUrl:
+          type: string
+        location:
+          type: string
+        featured:
+          type: boolean
+    GalleryItemInput:
+      type: object
+      required:
+        - titleCs
+        - titleUk
+        - category
+        - imageUrl
+        - location
+      properties:
+        titleCs:
+          type: string
+          minLength: 1
+        titleUk:
+          type: string
+          minLength: 1
+        category:
+          type: string
+          minLength: 1
+        imageUrl:
+          type: string
+          minLength: 1
+        location:
+          type: string
+          minLength: 1
+        featured:
+          type: boolean
+    GalleryItemUpdate:
+      type: object
+      properties:
+        titleCs:
+          type: string
+        titleUk:
+          type: string
+        category:
+          type: string
+        imageUrl:
+          type: string
+        location:
+          type: string
+        featured:
+          type: boolean
+    AdminSummary:
+      type: object
+      required:
+        - galleryCount
+        - featuredCount
+        - serviceCount
+        - lastUpdated
+      properties:
+        galleryCount:
+          type: number
+        featuredCount:
+          type: number
+        serviceCount:
+          type: number
+        lastUpdated:
+          type: string
+    RequestUploadUrlBody:
+      type: object
+      required:
+        - name
+        - size
+        - contentType
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        size:
+          type: number
+          minimum: 1
+          maximum: 10485760
+        contentType:
+          type: string
+          enum: [image/jpeg, image/png, image/webp]
+    RequestUploadUrlResponse:
+      type: object
+      required:
+        - uploadURL
+        - objectPath
+        - metadata
+      properties:
+        uploadURL:
+          type: string
+          minLength: 1
+        objectPath:
+          type: string
+          pattern: "^/objects/"
+        metadata:
+          $ref: "#/components/schemas/RequestUploadUrlBody"
+
