@@ -10,6 +10,9 @@
   },
   "private": true,
   "dependencies": {
+    "@netlify/blobs": "^11.0.2",
+    "@netlify/database": "^2.0.0",
+    "@netlify/functions": "^6.0.0",
     "@replit/connectors-sdk": "^0.4.1"
   },
   "devDependencies": {
