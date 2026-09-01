@@ -2,50 +2,44 @@
 
 ## Production architecture
 
-- Frontend: `https://bobalstav.cz` on Netlify.
-- API: `https://api.bobalstav.cz` on a Replit Deployment.
-- Database: the existing PostgreSQL database, reachable by the API.
-- Gallery photos: Replit App Storage, served publicly through the API.
+The website, API, PostgreSQL database, and gallery image storage run in one
+Netlify project at `https://bobalstav.cz`. The frontend uses same-origin
+`/api/*` routes served by Netlify Functions, Netlify Database, and Netlify
+Blobs. No `api.bobalstav.cz` subdomain and no `VITE_API_BASE_URL` environment
+variable are required.
 
-The frontend depends on the API for public content, gallery data, and the protected admin area. Do not launch the frontend without a working production API.
+## 1. Connect GitHub and configure Netlify
 
-## 1. Deploy the API
+1. In Netlify, select **Add new project** and connect the GitHub repository.
+2. Use the repository's `netlify.toml`; it defines the build command, publish
+   directory, Functions directory, API routing before the SPA fallback, and
+   security headers.
+3. Enable **Netlify Database** for this project. Netlify Database requires a
+   credit-based plan. Netlify automatically applies committed migrations in
+   `netlify/database/migrations/` immediately before deploy publication; do
+   not manually apply this migration or run it against any legacy database.
+4. In **Project configuration → Environment variables**, add:
 
-Publish `artifacts/api-server` as a Replit Deployment before the Netlify launch. App Storage uses Replit's storage sidecar, so this API must run on Replit. Configure these production secrets and variables:
+   ```text
+   ADMIN_PASSWORD=<a long unique admin password>
+   SESSION_SECRET=<a long random secret>
+   ```
 
-- `DATABASE_URL`
-- `ADMIN_PASSWORD`
-- `SESSION_SECRET`
-- `FRONTEND_URLS=https://bobalstav.cz,https://www.bobalstav.cz`
-- `PUBLIC_API_URL=https://api.bobalstav.cz`
+   Never commit these values. `SESSION_SECRET` signs the eight-hour,
+   HttpOnly/Secure/SameSite=Lax admin session cookie.
+5. Netlify Blobs requires no credentials or manual bucket setup. The deployed
+   function automatically uses the project-scoped `bobal-stav-images` Blob
+   store.
 
-The App Storage variables below are provisioned and managed by Replit. Keep them available to the API deployment:
+## 2. Deploy and verify
 
-- `DEFAULT_OBJECT_STORAGE_BUCKET_ID`
-- `PUBLIC_OBJECT_SEARCH_PATHS`
-- `PRIVATE_OBJECT_DIR`
+Deploy the project. Verify the public API endpoints:
 
-Point the DNS record for `api.bobalstav.cz` to the API host and verify:
+- `https://bobalstav.cz/api/healthz`
+- `https://bobalstav.cz/api/content`
+- `https://bobalstav.cz/api/gallery`
 
-- `https://api.bobalstav.cz/api/healthz`
-- `https://api.bobalstav.cz/api/content`
-- `https://api.bobalstav.cz/api/gallery`
-
-The admin page uploads JPG, PNG, and WebP images up to 10 MB directly to App Storage using a short-lived signed URL. PostgreSQL stores only the returned object path.
-
-Never commit the secret values to the repository.
-
-## 2. Import the repository into Netlify
-
-The root `netlify.toml` contains the build command, publish directory, SPA fallback, canonical `www` redirect, cache policy, and security headers.
-
-Add this Netlify environment variable:
-
-```text
-VITE_API_BASE_URL=https://api.bobalstav.cz
-```
-
-Deploy and verify that every direct route loads:
+Also check each direct SPA/SEO route:
 
 - `/`
 - `/sluzby`
@@ -54,9 +48,17 @@ Deploy and verify that every direct route loads:
 - `/kontakt`
 - `/admin`
 
+The admin gallery accepts raw JPG, PNG, and WebP uploads up to **5 MiB**. This
+limit remains below Netlify Functions' documented 6 MB request payload limit.
+Images are stored in Netlify Blobs and are publicly returned through
+`/api/storage/objects/*`; image bytes are not stored in the database.
+
 ## 3. Connect the domain
 
-In Netlify, add `bobalstav.cz` as the primary domain and `www.bobalstav.cz` as an alias. Follow the DNS records provided by Netlify and wait for HTTPS provisioning. The repository redirects `www` to the canonical non-`www` domain.
+In Netlify, add `bobalstav.cz` as the primary domain and `www.bobalstav.cz` as
+an alias. Create the DNS records Netlify provides and wait for HTTPS
+provisioning. The repository redirects `www` to the canonical non-`www`
+domain. There is no DNS record to create for `api.bobalstav.cz`.
 
 ## 4. Post-launch SEO
 
@@ -71,4 +73,5 @@ Add `https://bobalstav.cz` to Google Search Console and submit:
 https://bobalstav.cz/sitemap.xml
 ```
 
-Also test the homepage with Google Rich Results Test and inspect the `LocalBusiness` structured data.
+Also test the homepage with Google Rich Results Test and inspect the
+`LocalBusiness` structured data.
