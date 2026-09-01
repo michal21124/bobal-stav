@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Bobal Stav"
+description = "A bilingual Czech and Ukrainian construction company website for Bobal Stav s.r.o., with a rich project gallery, contact information, and an admin area for editing content and photos."
+version = "1.0.0"
+id = "artifacts/bobal-stav"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21340
+
+[services.development]
+run = "pnpm --filter @workspace/bobal-stav run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/bobal-stav", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/bobal-stav/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21340"
+BASE_PATH = "/"
