@@ -155,7 +155,21 @@ export const GetAdminSummaryResponse = zod.object({
 
 
 /**
- * @summary Request a presigned image upload URL
+ * Authenticated raw image bytes. Set Content-Type to image/jpeg, image/png, or image/webp.
+ * @summary Upload a gallery image
+ */
+export const uploadGalleryImageResponseObjectPathRegExp = new RegExp('^/objects');
+
+
+export const UploadGalleryImageResponse = zod.object({
+  "objectPath": zod.string().regex(uploadGalleryImageResponseObjectPathRegExp)
+})
+
+
+/**
+ * Legacy Replit-only endpoint retained for the old API artifact. It is not implemented by the Netlify Function; use `/storage/uploads`.
+ * @deprecated
+ * @summary Legacy presigned image upload URL
  */
 export const requestImageUploadUrlBodyNameMax = 255;
 
