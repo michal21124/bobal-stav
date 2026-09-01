@@ -28,7 +28,8 @@ import type {
   RequestUploadUrlBody,
   RequestUploadUrlResponse,
   SiteContent,
-  SiteContentUpdate
+  SiteContentUpdate,
+  UploadImageResponse
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -652,6 +653,78 @@ export function useGetAdminSummary<TData = Awaited<ReturnType<typeof getAdminSum
 
 
 
+export const getUploadGalleryImageUrl = () => {
+
+
+
+
+  return `/api/storage/uploads`
+}
+
+/**
+ * Authenticated raw image bytes. Set Content-Type to image/jpeg, image/png, or image/webp.
+ * @summary Upload a gallery image
+ */
+export const uploadGalleryImage = async (uploadGalleryImageBody: Blob, options?: Parameters<typeof customFetch>[1]): Promise<UploadImageResponse> => {
+
+  return customFetch<UploadImageResponse>(getUploadGalleryImageUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'image/jpeg', ...options?.headers },
+    body: uploadGalleryImageBody
+  }
+);}
+
+
+
+
+
+export const getUploadGalleryImageMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadGalleryImage>>, TError,{data: BodyType<Blob>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadGalleryImage>>, TError,{data: BodyType<Blob>}, TContext> => {
+
+const mutationKey = ['uploadGalleryImage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadGalleryImage>>, {data: BodyType<Blob>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  uploadGalleryImage(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadGalleryImageMutationResult = NonNullable<Awaited<ReturnType<typeof uploadGalleryImage>>>
+    export type UploadGalleryImageMutationBody = BodyType<Blob>
+    export type UploadGalleryImageMutationError = ErrorType<void>
+
+    /**
+ * @summary Upload a gallery image
+ */
+export const useUploadGalleryImage = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadGalleryImage>>, TError,{data: BodyType<Blob>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadGalleryImage>>,
+        TError,
+        {data: BodyType<Blob>},
+        TContext
+      > => {
+      return useMutation(getUploadGalleryImageMutationOptions(options));
+    }
+
 export const getRequestImageUploadUrlUrl = () => {
 
 
@@ -661,7 +734,9 @@ export const getRequestImageUploadUrlUrl = () => {
 }
 
 /**
- * @summary Request a presigned image upload URL
+ * Legacy Replit-only endpoint retained for the old API artifact. It is not implemented by the Netlify Function; use `/storage/uploads`.
+ * @deprecated
+ * @summary Legacy presigned image upload URL
  */
 export const requestImageUploadUrl = async (requestUploadUrlBody: RequestUploadUrlBody, options?: Parameters<typeof customFetch>[1]): Promise<RequestUploadUrlResponse> => {
 
@@ -678,7 +753,7 @@ export const requestImageUploadUrl = async (requestUploadUrlBody: RequestUploadU
 
 
 
-export const getRequestImageUploadUrlMutationOptions = <TError = ErrorType<void>,
+export const getRequestImageUploadUrlMutationOptions = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestImageUploadUrl>>, TError,{data: BodyType<RequestUploadUrlBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof requestImageUploadUrl>>, TError,{data: BodyType<RequestUploadUrlBody>}, TContext> => {
 
@@ -707,12 +782,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RequestImageUploadUrlMutationResult = NonNullable<Awaited<ReturnType<typeof requestImageUploadUrl>>>
     export type RequestImageUploadUrlMutationBody = BodyType<RequestUploadUrlBody>
-    export type RequestImageUploadUrlMutationError = ErrorType<void>
+    export type RequestImageUploadUrlMutationError = ErrorType<unknown>
 
     /**
- * @summary Request a presigned image upload URL
+ * @deprecated
+ * @summary Legacy presigned image upload URL
  */
-export const useRequestImageUploadUrl = <TError = ErrorType<void>,
+export const useRequestImageUploadUrl = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestImageUploadUrl>>, TError,{data: BodyType<RequestUploadUrlBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof requestImageUploadUrl>>,
