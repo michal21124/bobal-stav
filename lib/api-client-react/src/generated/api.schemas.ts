@@ -73,6 +73,11 @@ export interface AdminSummary {
   lastUpdated: string;
 }
 
+export interface UploadImageResponse {
+  /** @pattern ^/objects/ */
+  objectPath: string;
+}
+
 export type RequestUploadUrlBodyContentType = typeof RequestUploadUrlBodyContentType[keyof typeof RequestUploadUrlBodyContentType];
 
 
