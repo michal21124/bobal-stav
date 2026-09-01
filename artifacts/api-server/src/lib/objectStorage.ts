@@ -77,10 +77,7 @@ export class ObjectStorageService {
     return null;
   }
 
-  async downloadObject(
-    file: File,
-    cacheTtlSec = 3600,
-  ): Promise<Response> {
+  async downloadObject(file: File, cacheTtlSec = 3600): Promise<Response> {
     const [metadata] = await file.getMetadata();
     const aclPolicy = await getObjectAclPolicy(file);
     const isPublic = aclPolicy?.visibility === "public";
@@ -106,6 +103,23 @@ export class ObjectStorageService {
       method: "PUT",
       ttlSec: 900,
     });
+  }
+
+  async saveObjectEntity(
+    bytes: Buffer,
+    contentType: string,
+    extension: string,
+  ): Promise<string> {
+    const privateObjectDir = this.getPrivateObjectDir().replace(/\/+$/, "");
+    const entityPath = `uploads/${randomUUID()}.${extension}`;
+    const { bucketName, objectName } = parseObjectPath(
+      `${privateObjectDir}/${entityPath}`,
+    );
+    await objectStorageClient.bucket(bucketName).file(objectName).save(bytes, {
+      contentType,
+      resumable: false,
+    });
+    return `/objects/${entityPath}`;
   }
 
   async getObjectEntityFile(objectPath: string): Promise<File> {
