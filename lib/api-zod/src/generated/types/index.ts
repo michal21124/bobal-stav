@@ -16,3 +16,4 @@ export * from './requestUploadUrlBodyContentType';
 export * from './requestUploadUrlResponse';
 export * from './siteContent';
 export * from './siteContentUpdate';
+export * from './uploadImageResponse';
