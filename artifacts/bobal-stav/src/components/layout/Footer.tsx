@@ -38,6 +38,12 @@ export function Footer() {
                 </a>
               </li>
               <li className="text-muted-foreground text-sm">
+                <span className="block text-xs uppercase tracking-wider text-foreground mb-1">E-mail</span>
+                <a href="mailto:bobalstav.cz@gmail.com" className="break-all text-base font-medium text-foreground transition-colors hover:text-primary">
+                  bobalstav.cz@gmail.com
+                </a>
+              </li>
+              <li className="text-muted-foreground text-sm">
                 <span className="block text-xs uppercase tracking-wider text-foreground mb-1">Adresa</span>
                 <span>{content.address}</span>
               </li>
