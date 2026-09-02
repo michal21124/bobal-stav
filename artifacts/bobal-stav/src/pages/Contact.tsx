@@ -53,12 +53,26 @@ export default function Contact() {
     event.preventDefault();
     setStatus("submitting");
     try {
-      const response = await fetch(apiUrl("/contact"), {
+      const databaseResponse = await fetch(apiUrl("/contact"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      if (!response.ok) throw new Error("Contact form request failed");
+      if (!databaseResponse.ok) throw new Error("Contact database request failed");
+
+      if (import.meta.env.PROD) {
+        const netlifyData = new URLSearchParams({
+          "form-name": "contact",
+          ...form,
+        });
+        const netlifyResponse = await fetch("/", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: netlifyData.toString(),
+        });
+        if (!netlifyResponse.ok) throw new Error("Netlify Forms request failed");
+      }
+
       setForm(initialForm);
       setStatus("success");
     } catch {
@@ -153,7 +167,15 @@ export default function Contact() {
               {t("Vyplňte několik údajů a stručně popište, co potřebujete. Připravíme další postup a domluvíme se na konzultaci.", "Заповніть кілька полів і коротко опишіть, що вам потрібно. Ми підготуємо подальші кроки та домовимося про консультацію.")}
             </p>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form
+              name="contact"
+              method="POST"
+              data-netlify="true"
+              data-netlify-honeypot="website"
+              onSubmit={handleSubmit}
+              className="space-y-5"
+            >
+              <input type="hidden" name="form-name" value="contact" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <label className="block">
                   <span className="form-label">{t("Jméno a příjmení", "Ім’я та прізвище")}</span>
