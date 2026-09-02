@@ -152,7 +152,7 @@ export function Navbar() {
                   key={`${service}-${index}`}
                   href={getServiceHref(service, index)}
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-between py-3 pl-4 text-xs tracking-wider uppercase font-semibold text-muted-foreground hover:text-primary"
+                  className="flex items-center justify-between py-3 pl-4 text-xs tracking-wider uppercase font-semibold text-foreground/80 hover:text-primary"
                 >
                   {localizeText(service, language)}
                   <span className="text-primary">↗</span>
