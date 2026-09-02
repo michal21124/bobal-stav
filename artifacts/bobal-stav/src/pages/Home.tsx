@@ -365,9 +365,6 @@ export default function Home() {
                     <span className="text-[10px] text-primary font-bold uppercase tracking-[0.2em] mb-4 block bg-background/90 w-fit px-3 py-1 rounded-md">
                       {localizeText(project.category, language)}
                     </span>
-                    <h3 className="text-3xl font-display font-bold mb-2 text-foreground uppercase tracking-tight">
-                      {language === 'cs' ? project.titleCs : project.titleUk}
-                    </h3>
                     <p className="text-muted-foreground text-sm tracking-widest uppercase">
                       {project.location}
                     </p>
