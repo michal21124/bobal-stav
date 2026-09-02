@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import { Clock, Hammer, Mail, MapPin, MessageCircle, Phone, Send, Shield, CheckCircle2 } from "lucide-react";
 import { useGetSiteContent } from "@workspace/api-client-react";
@@ -42,6 +42,14 @@ export default function Contact() {
   const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
     t("Dobrý den, mám zájem o stavební práce.", "Добрий день, мене цікавлять будівельні роботи."),
   )}`;
+
+  useEffect(() => {
+    if (window.location.hash !== "#contact-form") return;
+
+    window.requestAnimationFrame(() => {
+      document.getElementById("contact-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, []);
 
   const updateField = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = event.target;
@@ -168,6 +176,7 @@ export default function Contact() {
             </p>
 
             <form
+              id="contact-form"
               name="contact"
               method="POST"
               data-netlify="true"

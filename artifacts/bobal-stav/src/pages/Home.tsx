@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { localizeText, useLanguage } from "@/contexts/LanguageContext";
 import { useGetSiteContent, useListGalleryItems, useListTestimonials } from "@workspace/api-client-react";
 import { motion, useInView, useReducedMotion } from "framer-motion";
-import { ArrowRight, Hammer, Ruler, ShieldCheck, SquareSquare, PaintRoller, Axe, Quote, Star } from "lucide-react";
+import { ArrowRight, Hammer, Ruler, ShieldCheck, SquareSquare, PaintRoller, Axe, Quote, Star, Phone } from "lucide-react";
 import { getServiceHref } from "@/data/services";
 
 const HERO_IMAGES = [
@@ -204,11 +204,20 @@ export default function Home() {
                 {language === 'cs' ? content?.aboutCs : content?.aboutUk}
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <Link href="/kontakt" className="group inline-flex min-h-14 items-center justify-center px-7 py-4 sm:px-9 sm:py-5 text-xs sm:text-sm tracking-[0.16em] uppercase font-bold bg-primary text-primary-foreground border-2 border-primary shadow-[0_0_28px_rgba(34,197,94,0.28)] hover:bg-primary/90 hover:border-primary/90 hover:shadow-[0_0_38px_rgba(34,197,94,0.45)] active:scale-[0.98] transition-all duration-300 rounded-md shrink">
-                  <span className="truncate">{t("Získat nabídku", "Отримати пропозицію")}</span>
-                  <ArrowRight className="ml-3 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                </Link>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch">
+                <div className="flex flex-col gap-3 sm:gap-2">
+                  <a
+                    href={`tel:${content?.phone}`}
+                    className="group inline-flex min-h-10 self-start items-center justify-center rounded-md border border-primary/80 bg-background/65 px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-foreground shadow-[0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-md transition-all duration-300 hover:border-primary hover:bg-primary hover:text-primary-foreground active:scale-[0.98]"
+                  >
+                    <Phone className="mr-2.5 h-3.5 w-3.5 transition-transform duration-300 group-hover:scale-110" />
+                    {t("Zavolat", "Зателефонувати")}
+                  </a>
+                  <Link href="/kontakt#contact-form" className="group inline-flex min-h-14 items-center justify-center px-7 py-4 sm:px-9 sm:py-5 text-xs sm:text-sm tracking-[0.16em] uppercase font-bold bg-primary text-primary-foreground border-2 border-primary shadow-[0_0_28px_rgba(234,179,8,0.28)] hover:bg-primary/90 hover:border-primary/90 hover:shadow-[0_0_38px_rgba(234,179,8,0.45)] active:scale-[0.98] transition-all duration-300 rounded-md shrink">
+                    <span className="truncate">{t("Nezávazná poptávka", "Необов’язковий запит")}</span>
+                    <ArrowRight className="ml-3 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </Link>
+                </div>
                 <Link href="/projekty" className="group inline-flex min-h-14 items-center justify-center px-7 py-4 sm:px-9 sm:py-5 text-xs sm:text-sm tracking-[0.16em] uppercase font-bold bg-background/70 border-2 border-foreground/80 text-foreground shadow-[0_8px_24px_rgba(0,0,0,0.28)] hover:bg-foreground hover:text-background hover:border-foreground active:scale-[0.98] transition-all duration-300 rounded-md shrink backdrop-blur-md">
                   <span className="truncate">{t("Naše práce", "Наші роботи")}</span>
                   <ArrowRight className="ml-3 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
