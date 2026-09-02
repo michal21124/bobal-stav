@@ -1,12 +1,16 @@
 import { Link, useLocation } from "wouter";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { Menu, X } from "lucide-react";
+import { localizeText, useLanguage } from "@/contexts/LanguageContext";
+import { useGetSiteContent } from "@workspace/api-client-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import { getServiceHref, serviceDefinitions } from "@/data/services";
 
 export function Navbar() {
   const [location] = useLocation();
   const { language, setLanguage, t } = useLanguage();
+  const { data: content } = useGetSiteContent();
   const [isOpen, setIsOpen] = useState(false);
+  const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -17,13 +21,19 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    setIsServicesOpen(false);
+  }, [location]);
+
   const navLinks = [
     { href: "/", labelCs: "Domů", labelUk: "Головна" },
-    { href: "/sluzby", labelCs: "Služby", labelUk: "Послуги" },
     { href: "/projekty", labelCs: "Projekty", labelUk: "Проєкти" },
     { href: "/o-nas", labelCs: "O nás", labelUk: "Про нас" },
     { href: "/kontakt", labelCs: "Kontakt", labelUk: "Контакти" },
   ];
+  const defaultServices = serviceDefinitions.map((service) => `${service.titleCs} / ${service.titleUk}`);
+  const serviceItems = content?.services?.length ? content.services : defaultServices;
+  const servicesActive = location.startsWith("/sluzby");
 
   return (
     <nav
@@ -35,6 +45,39 @@ export function Navbar() {
         <div className="relative flex items-center justify-between h-16">
           <div className="hidden md:block w-1/3">
             <div className="flex items-center gap-7">
+              <div className="relative">
+                <div className="flex items-center">
+                  <Link
+                    href="/sluzby"
+                    className={`text-[13px] tracking-widest uppercase font-semibold transition-colors relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:bg-primary after:transition-all after:duration-300 ${
+                      servicesActive ? "text-primary after:w-full" : "text-foreground/80 hover:text-foreground after:w-0 hover:after:w-full"
+                    }`}
+                  >
+                    {t("Služby", "Послуги")}
+                  </Link>
+                  <button
+                    type="button"
+                    aria-label={t("Zobrazit služby", "Показати послуги")}
+                    aria-expanded={isServicesOpen}
+                    onClick={() => setIsServicesOpen((open) => !open)}
+                    className={`ml-1 p-1 transition-colors ${servicesActive ? "text-primary" : "text-foreground/70 hover:text-primary"}`}
+                  >
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isServicesOpen ? "rotate-180" : ""}`} />
+                  </button>
+                </div>
+                {isServicesOpen && (
+                  <div className="absolute left-0 top-full mt-5 w-80 border border-border bg-background/95 p-2 shadow-2xl backdrop-blur-md">
+                    <Link href="/sluzby" className="block border-b border-border px-4 py-3 text-[11px] font-bold uppercase tracking-[0.16em] text-primary hover:bg-card">
+                      {t("Přehled všech služeb", "Переглянути всі послуги")}
+                    </Link>
+                    {serviceItems.map((service, index) => (
+                      <Link key={`${service}-${index}`} href={getServiceHref(service, index)} className="block border-b border-border/60 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-foreground/80 last:border-0 hover:bg-card hover:text-primary">
+                        {localizeText(service, language)}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -95,6 +138,27 @@ export function Navbar() {
       {isOpen && (
         <div className="md:hidden bg-background border-b border-border">
           <div className="px-6 pt-4 pb-8 space-y-2">
+            <Link
+              href="/sluzby"
+              onClick={() => setIsOpen(false)}
+              className={`flex items-center justify-between py-4 text-sm tracking-widest uppercase font-bold border-b border-border/50 ${servicesActive ? "text-primary" : "text-foreground hover:text-primary"}`}
+            >
+              {t("Služby", "Послуги")}
+              <ChevronDown className="h-4 w-4 -rotate-90" />
+            </Link>
+            <div className="border-b border-border/50 pb-2">
+              {serviceItems.map((service, index) => (
+                <Link
+                  key={`${service}-${index}`}
+                  href={getServiceHref(service, index)}
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center justify-between py-3 pl-4 text-xs tracking-wider uppercase font-semibold text-muted-foreground hover:text-primary"
+                >
+                  {localizeText(service, language)}
+                  <span className="text-primary">↗</span>
+                </Link>
+              ))}
+            </div>
             {navLinks.map((link) => (
               <Link
                 key={link.href}

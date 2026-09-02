@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { serviceDefinitions } from "@/data/services";
 
 const SITE_URL = "https://bobalstav.cz";
 const SOCIAL_IMAGE = `${SITE_URL}/service-renovation.png`;
@@ -58,6 +59,22 @@ const pageMeta = {
   },
 } as const;
 
+const servicePageMeta = Object.fromEntries(
+  serviceDefinitions.map((service) => [
+    `/sluzby/${service.slug}`,
+    {
+      cs: {
+        title: `${service.titleCs} Praha | Bobal Stav`,
+        description: service.longCs.slice(0, 158),
+      },
+      uk: {
+        title: `${service.titleUk} у Празі | Bobal Stav`,
+        description: service.longUk.slice(0, 158),
+      },
+    },
+  ]),
+) as Record<string, { cs: { title: string; description: string }; uk: { title: string; description: string } }>;
+
 function setMeta(selector: string, attribute: "name" | "property", key: string, content: string) {
   let element = document.head.querySelector<HTMLMetaElement>(selector);
   if (!element) {
@@ -74,7 +91,8 @@ export function Seo() {
 
   useEffect(() => {
     const isAdmin = location.startsWith("/admin");
-    const isPublicRoute = location in pageMeta;
+    const serviceMeta = servicePageMeta[location];
+    const isPublicRoute = location in pageMeta || Boolean(serviceMeta);
     const route = isPublicRoute ? location as keyof typeof pageMeta : "/";
     const isNoIndex = isAdmin || !isPublicRoute;
     const meta = isAdmin
@@ -83,12 +101,12 @@ export function Seo() {
           description: "Zabezpečená administrace webu Bobal Stav.",
         }
       : isPublicRoute
-        ? pageMeta[route][language]
+        ? serviceMeta ? serviceMeta[language] : pageMeta[route][language]
         : {
             title: language === "cs" ? "Stránka nenalezena | Bobal Stav" : "Сторінку не знайдено | Bobal Stav",
             description: language === "cs" ? "Požadovaná stránka nebyla nalezena." : "Запитану сторінку не знайдено.",
           };
-    const canonicalPath = route === "/" ? "/" : route;
+    const canonicalPath = serviceMeta ? location : route === "/" ? "/" : route;
     const canonicalUrl = `${SITE_URL}${canonicalPath}`;
 
     document.documentElement.lang = language === "cs" ? "cs-CZ" : "uk-UA";

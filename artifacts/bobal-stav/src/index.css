@@ -143,6 +143,18 @@
   @apply bg-transparent border border-border text-foreground hover:bg-secondary hover:border-border active:scale-[0.98];
 }
 
+.form-label {
+  @apply mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-foreground;
+}
+
+.form-input {
+  @apply w-full rounded-md border border-border bg-card/40 px-4 py-3.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-primary focus:ring-1 focus:ring-primary;
+}
+
+select.form-input {
+  @apply cursor-pointer;
+}
+
 /* Subtle architectural noise texture overlay */
 .bg-noise {
   position: relative;

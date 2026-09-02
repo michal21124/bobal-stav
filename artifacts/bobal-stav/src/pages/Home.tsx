@@ -1,20 +1,21 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { localizeText, useLanguage } from "@/contexts/LanguageContext";
-import { useGetSiteContent, useListGalleryItems } from "@workspace/api-client-react";
+import { useGetSiteContent, useListGalleryItems, useListTestimonials } from "@workspace/api-client-react";
 import { motion, useInView, useReducedMotion } from "framer-motion";
-import { ArrowRight, Hammer, Ruler, ShieldCheck, SquareSquare, PaintRoller, Axe } from "lucide-react";
+import { ArrowRight, Hammer, Ruler, ShieldCheck, SquareSquare, PaintRoller, Axe, Quote, Star } from "lucide-react";
+import { getServiceHref } from "@/data/services";
 
 const HERO_IMAGES = [
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1920",
-  "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=1920",
-  "https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&q=80&w=1920",
+  { src: "/hero-facade.jpeg", altCs: "Fasáda domu během rekonstrukce", altUk: "Фасад будинку під час реконструкції" },
+  { src: "/hero-bathroom.jpeg", altCs: "Obklady v moderní koupelně", altUk: "Облицювання сучасної ванної кімнати" },
+  { src: "/hero-interior.jpeg", altCs: "Dokončený interiér domu", altUk: "Завершений інтер’єр будинку" },
 ];
 
 const SERVICE_IMAGES = [
   "/service-masonry.png",
-  "/service-renovation.png",
-  "/service-facade.png",
+  "/service-renovation.jpeg",
+  "/service-facade.jpeg",
   "/service-tiling.png",
   "/service-painting.png",
   "/service-demolition.png",
@@ -111,6 +112,7 @@ export default function Home() {
   const { t, language } = useLanguage();
   const { data: content, isLoading: isContentLoading } = useGetSiteContent();
   const { data: projects, isLoading: isProjectsLoading } = useListGalleryItems();
+  const { data: testimonials, isLoading: isTestimonialsLoading } = useListTestimonials();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
@@ -120,13 +122,14 @@ export default function Home() {
     return () => window.clearInterval(timer);
   }, []);
 
-  if (isContentLoading || isProjectsLoading) {
+  if (isContentLoading || isProjectsLoading || isTestimonialsLoading) {
     return <div className="h-[80vh] flex items-center justify-center bg-background">
       <div className="w-12 h-12 border border-primary border-t-transparent animate-spin"></div>
     </div>;
   }
 
   const featuredProjects = projects?.filter(p => p.featured).slice(0, 4) || [];
+  const visibleTestimonials = testimonials?.slice(0, 6) || [];
 
   const allIcons = [
     <SquareSquare className="w-6 h-6" />, 
@@ -165,11 +168,11 @@ export default function Home() {
       {/* Premium Hero Section - Full Bleed */}
       <section className="relative h-[90vh] min-h-[600px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
-          {HERO_IMAGES.map((img, idx) => (
+            {HERO_IMAGES.map((img, idx) => (
             <img 
-              key={img}
-              src={img} 
-              alt={`Hero construction ${idx + 1}`} 
+              key={img.src}
+              src={img.src}
+              alt={language === "cs" ? img.altCs : img.altUk}
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1500ms] ease-in-out ${
                 currentImageIndex === idx ? "opacity-100" : "opacity-0"
               }`}
@@ -201,13 +204,14 @@ export default function Home() {
                 {language === 'cs' ? content?.aboutCs : content?.aboutUk}
               </p>
               
-              <div className="flex flex-row gap-3 sm:gap-4">
-                <Link href="/kontakt" className="inline-flex items-center justify-center px-5 py-3 sm:px-8 sm:py-4 text-[10px] sm:text-xs tracking-widest uppercase font-bold bg-primary text-primary-foreground border border-primary hover:bg-primary/90 hover:border-primary/90 active:scale-[0.98] transition-all duration-300 rounded-md shrink">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <Link href="/kontakt" className="group inline-flex min-h-14 items-center justify-center px-7 py-4 sm:px-9 sm:py-5 text-xs sm:text-sm tracking-[0.16em] uppercase font-bold bg-primary text-primary-foreground border-2 border-primary shadow-[0_0_28px_rgba(34,197,94,0.28)] hover:bg-primary/90 hover:border-primary/90 hover:shadow-[0_0_38px_rgba(34,197,94,0.45)] active:scale-[0.98] transition-all duration-300 rounded-md shrink">
                   <span className="truncate">{t("Získat nabídku", "Отримати пропозицію")}</span>
+                  <ArrowRight className="ml-3 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
-                <Link href="/projekty" className="inline-flex items-center justify-center px-5 py-3 sm:px-8 sm:py-4 text-[10px] sm:text-xs tracking-widest uppercase font-bold bg-transparent border border-border text-foreground hover:bg-secondary hover:border-border active:scale-[0.98] transition-all duration-300 rounded-md group shrink backdrop-blur-sm bg-background/20">
+                <Link href="/projekty" className="group inline-flex min-h-14 items-center justify-center px-7 py-4 sm:px-9 sm:py-5 text-xs sm:text-sm tracking-[0.16em] uppercase font-bold bg-background/70 border-2 border-foreground/80 text-foreground shadow-[0_8px_24px_rgba(0,0,0,0.28)] hover:bg-foreground hover:text-background hover:border-foreground active:scale-[0.98] transition-all duration-300 rounded-md shrink backdrop-blur-md">
                   <span className="truncate">{t("Naše práce", "Наші роботи")}</span>
-                  <ArrowRight className="ml-2 w-3 h-3 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 hidden sm:block" />
+                  <ArrowRight className="ml-3 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
               </div>
             </motion.div>
@@ -215,7 +219,7 @@ export default function Home() {
         </div>
 
         {/* Slideshow Progress Indicator */}
-        <div className="absolute bottom-12 right-6 lg:right-12 z-20 flex items-center gap-4">
+        <div className="absolute top-4 right-6 md:top-auto md:bottom-12 lg:right-12 z-20 flex items-center gap-4">
           <div className="text-[10px] font-bold tracking-[0.2em] text-foreground">
             {String(currentImageIndex + 1).padStart(2, '0')}
           </div>
@@ -281,7 +285,7 @@ export default function Home() {
             {servicesToDisplay.map((feature, i) => (
               <Link 
                 key={i} 
-                href="/sluzby" 
+                href={getServiceHref(feature.titleCs, i)} 
                 className="snap-start shrink-0 w-[85vw] sm:w-[400px] lg:w-[420px] group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl"
               >
                 <div className="h-full bg-[#111111] border border-border/60 rounded-xl hover:bg-[#161616] hover:border-[#D4AF37]/40 transition-all duration-500 relative overflow-hidden group-hover:-translate-y-2 flex flex-col shadow-lg shadow-black/20">
@@ -380,6 +384,72 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {visibleTestimonials.length > 0 && (
+        <section id="testimonials" className="relative overflow-hidden border-t border-border bg-background py-28">
+          <div className="pointer-events-none absolute right-[-4rem] top-[-5rem] text-primary/[0.035]">
+            <Quote className="h-80 w-80 fill-current" />
+          </div>
+          <div className="relative z-10 mx-auto max-w-[1400px] px-6 lg:px-12">
+            <div className="mb-16 flex flex-col justify-between gap-8 md:flex-row md:items-end">
+              <div className="max-w-3xl">
+                <div className="mb-6 inline-flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+                  <span className="h-px w-10 bg-primary" />
+                  {t("Zkušenosti klientů", "Досвід клієнтів")}
+                </div>
+                <h2 className="mb-6 text-5xl font-display font-bold uppercase tracking-tight md:text-7xl">
+                  {t("Reference", "Відгуки")}<span className="text-primary">.</span>
+                </h2>
+                <p className="max-w-2xl text-xl font-light leading-relaxed text-muted-foreground">
+                  {t(
+                    "Důvěra se staví výsledky. Přečtěte si zkušenosti klientů s naší prací.",
+                    "Довіра будується результатами. Прочитайте відгуки клієнтів про нашу роботу.",
+                  )}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-[#D4AF37]">
+                {Array.from({ length: 5 }).map((_, index) => <Star key={index} className="h-5 w-5 fill-current" />)}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {visibleTestimonials.map((testimonial, index) => (
+                <motion.article
+                  key={testimonial.id}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.55, delay: index * 0.07 }}
+                  className="group flex min-h-80 flex-col rounded-xl border border-border/70 bg-card p-7 transition-all duration-500 hover:-translate-y-1 hover:border-primary/35 sm:p-9"
+                >
+                  <div className="mb-8 flex items-start justify-between gap-5">
+                    <Quote className="h-9 w-9 fill-primary/10 text-primary" />
+                    <div className="flex gap-1 text-[#D4AF37]" aria-label={`${testimonial.rating} / 5`}>
+                      {Array.from({ length: 5 }).map((_, starIndex) => (
+                        <Star
+                          key={starIndex}
+                          className={`h-4 w-4 ${starIndex < testimonial.rating ? "fill-current" : "opacity-25"}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <blockquote className="flex-1 text-lg font-light leading-8 text-foreground/90">
+                    “{language === "cs" ? testimonial.textCs : testimonial.textUk}”
+                  </blockquote>
+                  <div className="mt-9 border-t border-border pt-5">
+                    <p className="font-display text-lg font-bold uppercase tracking-tight">{testimonial.name}</p>
+                    {testimonial.project && (
+                      <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                        {localizeText(testimonial.project, language)}
+                      </p>
+                    )}
+                  </div>
+                </motion.article>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
       
       {/* Heavy Architectural CTA */}
       <section className="py-32 relative bg-background border-t border-border">

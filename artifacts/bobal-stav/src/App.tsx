@@ -15,6 +15,7 @@ import { Shell } from '@/components/layout/Shell';
 
 const Home = lazy(() => import('@/pages/Home'));
 const Services = lazy(() => import('@/pages/Services'));
+const ServiceDetail = lazy(() => import('@/pages/ServiceDetail'));
 const Projects = lazy(() => import('@/pages/Projects'));
 const About = lazy(() => import('@/pages/About'));
 const Contact = lazy(() => import('@/pages/Contact'));
@@ -36,6 +37,7 @@ function Router() {
         <Suspense fallback={<div className="min-h-[70vh] bg-background" aria-busy="true" />}>
           <Switch>
             <Route path="/" component={Home} />
+            <Route path="/sluzby/:slug" component={ServiceDetail} />
             <Route path="/sluzby" component={Services} />
             <Route path="/projekty" component={Projects} />
             <Route path="/o-nas" component={About} />

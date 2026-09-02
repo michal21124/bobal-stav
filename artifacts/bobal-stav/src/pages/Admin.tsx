@@ -10,6 +10,12 @@ import {
   getGetSiteContentQueryKey,
   getListGalleryItemsQueryKey,
   getGetAdminSummaryQueryKey,
+  useListAdminTestimonials,
+  useCreateTestimonial,
+  useUpdateTestimonial,
+  useDeleteTestimonial,
+  getListAdminTestimonialsQueryKey,
+  getListTestimonialsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -25,6 +31,8 @@ import {
   UploadCloud,
   Loader2,
   CheckCircle2,
+  MessageSquareQuote,
+  Star,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiUrl } from "@/lib/api-url";
@@ -192,7 +200,7 @@ function AdminLogin({ onAuthenticated }: { onAuthenticated: () => void }) {
 
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [activeTab, setActiveTab] = useState<
-    "overview" | "content" | "gallery"
+    "overview" | "content" | "gallery" | "testimonials"
   >("overview");
   const queryClient = useQueryClient();
 
@@ -222,7 +230,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </span>
         </div>
 
-        <nav className="grid grid-cols-3 gap-2 overflow-x-auto p-3 md:flex md:flex-1 md:flex-col md:space-y-2 md:p-4">
+        <nav className="grid grid-cols-4 gap-2 overflow-x-auto p-3 md:flex md:flex-1 md:flex-col md:space-y-2 md:p-4">
           <button
             onClick={() => setActiveTab("overview")}
             className={`flex min-w-0 items-center justify-center gap-2 rounded-md px-3 py-3 text-xs font-medium transition-colors md:w-full md:justify-start md:text-sm ${activeTab === "overview" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
@@ -243,6 +251,13 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           >
             <ImageIcon className="w-4 h-4" />
             <span className="truncate">Galerie</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("testimonials")}
+            className={`flex min-w-0 items-center justify-center gap-2 rounded-md px-3 py-3 text-xs font-medium transition-colors md:w-full md:justify-start md:text-sm ${activeTab === "testimonials" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
+          >
+            <MessageSquareQuote className="h-4 w-4" />
+            <span className="truncate">Reference</span>
           </button>
         </nav>
 
@@ -285,6 +300,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {activeTab === "overview" && <AdminOverview />}
           {activeTab === "content" && <AdminContent />}
           {activeTab === "gallery" && <AdminGallery />}
+          {activeTab === "testimonials" && <AdminTestimonials />}
         </div>
       </main>
     </div>
@@ -502,6 +518,15 @@ function AdminContent() {
   );
 }
 
+type PendingPhoto = {
+  id: string;
+  file: File;
+  previewUrl: string;
+  status: "uploading" | "uploaded" | "error";
+  objectPath?: string;
+  error?: string;
+};
+
 function AdminGallery() {
   const { data: items, isLoading } = useListGalleryItems();
   const deleteItem = useDeleteGalleryItem();
@@ -511,12 +536,14 @@ function AdminGallery() {
 
   const [isAdding, setIsAdding] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSavingBatch, setIsSavingBatch] = useState(false);
+  const [pendingPhotos, setPendingPhotos] = useState<PendingPhoto[]>([]);
   const [newItem, setNewItem] = useState({
     titleCs: "",
     titleUk: "",
-    category: "",
+    category: "Realizace",
     imageUrl: "",
-    location: "",
+    location: "Praha a okolí",
     featured: false,
   });
 
@@ -544,108 +571,159 @@ function AdminGallery() {
     }
   };
 
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newItem.imageUrl) {
-      toast({
-        title: "Chybí fotografie",
-        description: "Nahrajte fotografii nebo vložte její URL.",
-        variant: "destructive",
-      });
-      return;
-    }
-    createItem.mutate(
-      { data: newItem },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({
-            queryKey: getListGalleryItemsQueryKey(),
-          });
-          queryClient.invalidateQueries({
-            queryKey: getGetAdminSummaryQueryKey(),
-          });
-          setIsAdding(false);
-          setNewItem({
-            titleCs: "",
-            titleUk: "",
-            category: "",
-            imageUrl: "",
-            location: "",
-            featured: false,
-          });
-          toast({
-            title: "Přidáno",
-            description: "Nová položka byla přidána do galerie.",
-          });
-        },
-        onError: () => {
-          toast({
-            title: "Chyba",
-            description: "Projekt se nepodařilo uložit.",
-            variant: "destructive",
-          });
-        },
-      },
-    );
+  const resetNewItem = () => {
+    pendingPhotos.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
+    setPendingPhotos([]);
+    setNewItem({
+      titleCs: "",
+      titleUk: "",
+      category: "Realizace",
+      imageUrl: "",
+      location: "Praha a okolí",
+      featured: false,
+    });
   };
 
-  const handlePhotoUpload = async (file: File) => {
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const uploadedPhotos = pendingPhotos.filter(
+      (photo) => photo.status === "uploaded" && photo.objectPath,
+    );
+    if (!newItem.imageUrl && uploadedPhotos.length === 0) {
       toast({
-        title: "Nepodporovaný formát",
-        description: "Použijte fotografii JPG, PNG nebo WebP.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "Soubor je příliš velký",
-        description: "Maximální velikost fotografie je 5 MB.",
+        title: "Chybí fotografie",
+        description: "Vyberte alespoň jednu fotografii nebo vložte její URL.",
         variant: "destructive",
       });
       return;
     }
 
-    setIsUploading(true);
+    setIsSavingBatch(true);
+    let createdCount = 0;
     try {
-      const upload = await fetch(apiUrl("/api/storage/uploads"), {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": file.type,
-          "X-File-Name": encodeURIComponent(file.name),
-        },
-        body: file,
-      });
+      const itemsToCreate = uploadedPhotos.length > 0
+        ? uploadedPhotos.map((photo) => {
+            const filenameTitle = photo.file.name
+              .replace(/\.[^/.]+$/, "")
+              .replace(/[-_]+/g, " ")
+              .trim() || "Nový projekt";
+            const isBatch = uploadedPhotos.length > 1;
+            return {
+              titleCs: isBatch ? filenameTitle : (newItem.titleCs.trim() || filenameTitle),
+              titleUk: isBatch ? filenameTitle : (newItem.titleUk.trim() || filenameTitle),
+              category: newItem.category.trim() || "Realizace",
+              imageUrl: photo.objectPath!,
+              location: newItem.location.trim() || "Praha a okolí",
+              featured: newItem.featured,
+            };
+          })
+        : [{
+            ...newItem,
+            titleCs: newItem.titleCs.trim() || "Nový projekt",
+            titleUk: newItem.titleUk.trim() || "Новий проєкт",
+            category: newItem.category.trim() || "Realizace",
+            location: newItem.location.trim() || "Praha a okolí",
+          }];
 
-      if (!upload.ok) {
-        const error = await upload.json().catch(() => null);
-        throw new Error(error?.error || "Fotografii se nepodařilo nahrát.");
+      for (const item of itemsToCreate) {
+        await createItem.mutateAsync({ data: item });
+        createdCount += 1;
       }
 
-      const { objectPath } = (await upload.json()) as {
-        objectPath: string;
-      };
-
-      setNewItem((current) => ({ ...current, imageUrl: objectPath }));
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: getListGalleryItemsQueryKey() }),
+        queryClient.invalidateQueries({ queryKey: getGetAdminSummaryQueryKey() }),
+      ]);
+      setIsAdding(false);
+      resetNewItem();
       toast({
-        title: "Fotografie nahrána",
-        description: "Nyní můžete projekt uložit do galerie.",
+        title: "Přidáno",
+        description: `${itemsToCreate.length} ${itemsToCreate.length === 1 ? "položka byla přidána" : "položky byly přidány"} do galerie.`,
       });
-    } catch (error) {
+    } catch {
+      if (createdCount > 0) {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: getListGalleryItemsQueryKey() }),
+          queryClient.invalidateQueries({ queryKey: getGetAdminSummaryQueryKey() }),
+        ]);
+      }
       toast({
-        title: "Nahrávání selhalo",
-        description:
-          error instanceof Error ? error.message : "Zkuste to prosím znovu.",
+        title: "Chyba",
+        description: createdCount > 0
+          ? `${createdCount} položky byly uloženy, zbytek se nepodařilo uložit.`
+          : "Položky se nepodařilo uložit. Zkuste to prosím znovu.",
         variant: "destructive",
       });
     } finally {
-      setIsUploading(false);
+      setIsSavingBatch(false);
     }
   };
 
+  const updatePendingPhoto = (id: string, update: Partial<PendingPhoto>) => {
+    setPendingPhotos((photos) =>
+      photos.map((photo) => (photo.id === id ? { ...photo, ...update } : photo)),
+    );
+  };
+
+  const handlePhotoUpload = async (selectedFiles: FileList | File[]) => {
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const files = Array.from(selectedFiles);
+    const validFiles = files.filter((file) => allowedTypes.includes(file.type) && file.size <= 5 * 1024 * 1024);
+    const invalidCount = files.length - validFiles.length;
+    if (invalidCount > 0) {
+      toast({
+        title: "Některé fotografie byly přeskočeny",
+        description: `${invalidCount} ${invalidCount === 1 ? "soubor nesplňuje" : "soubory nesplňují"} formát JPG, PNG nebo WebP a limit 5 MB.`,
+        variant: "destructive",
+      });
+    }
+    if (validFiles.length === 0) return;
+
+    const photos = validFiles.map((file, index) => ({
+      id: `${Date.now()}-${index}-${file.name}`,
+      file,
+      previewUrl: URL.createObjectURL(file),
+      status: "uploading" as const,
+    }));
+    setPendingPhotos((current) => [...current, ...photos]);
+    setIsUploading(true);
+
+    for (const photo of photos) {
+      try {
+        const upload = await fetch(apiUrl("/api/storage/uploads"), {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": photo.file.type,
+            "X-File-Name": encodeURIComponent(photo.file.name),
+          },
+          body: photo.file,
+        });
+        if (!upload.ok) {
+          const error = await upload.json().catch(() => null);
+          throw new Error(error?.error || "Fotografii se nepodařilo nahrát.");
+        }
+        const { objectPath } = (await upload.json()) as { objectPath: string };
+        updatePendingPhoto(photo.id, { status: "uploaded", objectPath });
+      } catch (error) {
+        updatePendingPhoto(photo.id, {
+          status: "error",
+          error: error instanceof Error ? error.message : "Zkuste to znovu.",
+        });
+      }
+    }
+    setIsUploading(false);
+  };
+
+  const removePendingPhoto = (id: string) => {
+    setPendingPhotos((photos) => {
+      const photo = photos.find((item) => item.id === id);
+      if (photo) URL.revokeObjectURL(photo.previewUrl);
+      return photos.filter((item) => item.id !== id);
+    });
+  };
+
+  const uploadedCount = pendingPhotos.filter((photo) => photo.status === "uploaded").length;
   const previewImageUrl = newItem.imageUrl.startsWith("/objects/")
     ? apiUrl(`/api/storage${newItem.imageUrl}`)
     : newItem.imageUrl;
@@ -655,7 +733,10 @@ function AdminGallery() {
       <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <h1 className="text-3xl font-display font-bold">Galerie projektů</h1>
         <button
-          onClick={() => setIsAdding(!isAdding)}
+          onClick={() => {
+            if (isAdding) resetNewItem();
+            setIsAdding(!isAdding);
+          }}
           className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md font-bold hover:bg-primary/90 hover:shadow-sm transition-all active:scale-[0.98]"
         >
           {isAdding ? (
@@ -673,14 +754,18 @@ function AdminGallery() {
           onSubmit={handleCreate}
           className="bg-card border border-border p-6 rounded-lg mb-8 space-y-4"
         >
-          <h2 className="text-lg font-bold mb-4">Nový projekt</h2>
+          <div className="mb-5">
+            <h2 className="text-lg font-bold">Přidat fotografie</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Vyberte více fotografií najednou. Každá se uloží jako samostatný projekt.
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-xs text-muted-foreground">
-                Název (CS)
+                Název (CS) <span className="text-muted-foreground/70">(nepovinné)</span>
               </label>
               <input
-                required
                 type="text"
                 value={newItem.titleCs}
                 onChange={(e) =>
@@ -691,10 +776,9 @@ function AdminGallery() {
             </div>
             <div>
               <label className="text-xs text-muted-foreground">
-                Název (UK)
+                Název (UK) <span className="text-muted-foreground/70">(nepovinné)</span>
               </label>
               <input
-                required
                 type="text"
                 value={newItem.titleUk}
                 onChange={(e) =>
@@ -706,7 +790,6 @@ function AdminGallery() {
             <div>
               <label className="text-xs text-muted-foreground">Kategorie</label>
               <input
-                required
                 type="text"
                 value={newItem.category}
                 onChange={(e) =>
@@ -718,7 +801,6 @@ function AdminGallery() {
             <div>
               <label className="text-xs text-muted-foreground">Lokace</label>
               <input
-                required
                 type="text"
                 value={newItem.location}
                 onChange={(e) =>
@@ -729,21 +811,30 @@ function AdminGallery() {
             </div>
             <div className="space-y-3 md:col-span-2">
               <label className="text-xs text-muted-foreground">
-                Fotografie projektu
+                Fotografie projektu <span className="text-primary">(vyberte jednu nebo více)</span>
               </label>
               <label
                 htmlFor="gallery-photo-upload"
-                className={`flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-primary/45 bg-primary/5 px-5 py-6 text-center transition-colors hover:bg-primary/10 ${isUploading ? "pointer-events-none opacity-60" : ""}`}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  if (!isUploading && event.dataTransfer.files.length > 0) {
+                    void handlePhotoUpload(event.dataTransfer.files);
+                  }
+                }}
+                className={`flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-primary/45 bg-primary/5 px-5 py-7 text-center transition-colors hover:bg-primary/10 ${isUploading ? "pointer-events-none opacity-60" : ""}`}
               >
                 <input
                   id="gallery-photo-upload"
                   type="file"
+                  multiple
                   accept="image/jpeg,image/png,image/webp"
                   className="sr-only"
                   disabled={isUploading}
                   onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) void handlePhotoUpload(file);
+                    if (event.target.files?.length) {
+                      void handlePhotoUpload(event.target.files);
+                    }
                     event.target.value = "";
                   }}
                 />
@@ -751,49 +842,76 @@ function AdminGallery() {
                   <>
                     <Loader2 className="mb-2 h-7 w-7 animate-spin text-primary" />
                     <span className="text-sm font-semibold">
-                      Nahrávám fotografii…
-                    </span>
-                  </>
-                ) : newItem.imageUrl.startsWith("/objects/") ? (
-                  <>
-                    <CheckCircle2 className="mb-2 h-7 w-7 text-green-500" />
-                    <span className="text-sm font-semibold">
-                      Fotografie je nahrána
+                      Nahrávám fotografie…
                     </span>
                     <span className="mt-1 text-xs text-muted-foreground">
-                      Kliknutím můžete vybrat jinou
+                      Nahrávání probíhá postupně, okno nezavírejte
                     </span>
                   </>
                 ) : (
                   <>
-                    <UploadCloud className="mb-2 h-7 w-7 text-primary" />
+                    <UploadCloud className="mb-2 h-8 w-8 text-primary" />
                     <span className="text-sm font-semibold">
-                      Vybrat fotografii z telefonu nebo počítače
+                      Vybrat fotografie z telefonu nebo počítače
                     </span>
                     <span className="mt-1 text-xs text-muted-foreground">
-                      JPG, PNG nebo WebP, maximálně 5 MB
+                      Nebo je sem přetáhněte • JPG, PNG, WebP • max. 5 MB za kus
                     </span>
                   </>
                 )}
               </label>
-              {previewImageUrl && (
-                <img
-                  src={previewImageUrl}
-                  alt="Náhled fotografie projektu"
-                  className="aspect-video w-full rounded-lg border border-border object-cover"
-                />
+              {pendingPhotos.length > 0 && (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                  {pendingPhotos.map((photo) => (
+                    <div key={photo.id} className="group relative overflow-hidden rounded-lg border border-border bg-background">
+                      <img
+                        src={photo.previewUrl}
+                        alt={photo.file.name}
+                        className={`aspect-square w-full object-cover ${photo.status === "uploading" ? "opacity-50" : ""}`}
+                      />
+                      {photo.status === "uploading" && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/35">
+                          <Loader2 className="h-6 w-6 animate-spin text-white" />
+                        </div>
+                      )}
+                      {photo.status === "uploaded" && (
+                        <div className="absolute left-2 top-2 rounded-full bg-green-500 p-1 text-white">
+                          <CheckCircle2 className="h-4 w-4" />
+                        </div>
+                      )}
+                      {photo.status === "error" && (
+                        <div className="absolute inset-x-0 bottom-0 bg-destructive/90 px-2 py-1 text-[10px] text-white">
+                          Nahrání selhalo
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removePendingPhoto(photo.id)}
+                        disabled={photo.status === "uploading"}
+                        className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-1 text-xs text-white opacity-0 transition-opacity hover:bg-destructive group-hover:opacity-100 disabled:pointer-events-none"
+                        aria-label={`Odebrat ${photo.file.name}`}
+                      >
+                        ×
+                      </button>
+                      <p className="truncate px-2 py-2 text-[11px] text-muted-foreground" title={photo.file.name}>
+                        {photo.file.name}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {uploadedCount > 1 && (
+                <p className="text-xs text-primary">
+                  {uploadedCount} fotografií připraveno. Název každého projektu se vezme z názvu souboru.
+                </p>
               )}
               <div>
                 <label className="text-xs text-muted-foreground">
-                  Nebo vložte URL obrázku
+                  Nebo vložte URL jednoho obrázku
                 </label>
                 <input
                   type="url"
-                  value={
-                    newItem.imageUrl.startsWith("/objects/")
-                      ? ""
-                      : newItem.imageUrl
-                  }
+                  value={newItem.imageUrl.startsWith("/objects/") ? "" : newItem.imageUrl}
                   placeholder="https://…"
                   onChange={(e) =>
                     setNewItem({ ...newItem, imageUrl: e.target.value })
@@ -801,6 +919,13 @@ function AdminGallery() {
                   className="w-full bg-background border border-border p-2 rounded-md focus:outline-none focus:border-primary"
                 />
               </div>
+              {previewImageUrl && (
+                <img
+                  src={previewImageUrl}
+                  alt="Náhled fotografie projektu"
+                  className="aspect-video w-full rounded-lg border border-border object-cover"
+                />
+              )}
             </div>
             <div className="md:col-span-2 flex items-center gap-2">
               <input
@@ -819,10 +944,10 @@ function AdminGallery() {
           </div>
           <button
             type="submit"
-            disabled={createItem.isPending || isUploading}
+            disabled={createItem.isPending || isUploading || isSavingBatch}
             className="bg-primary text-white px-4 py-2 rounded-md font-bold text-sm hover:bg-primary/90 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {createItem.isPending ? "Ukládám..." : "Uložit projekt"}
+            {isSavingBatch ? "Ukládám fotografie..." : uploadedCount > 1 ? `Uložit ${uploadedCount} projekty` : "Uložit do galerie"}
           </button>
         </form>
       )}
@@ -865,6 +990,250 @@ function AdminGallery() {
       </div>
       {items?.length === 0 && (
         <p className="text-muted-foreground">Zatím žádné projekty v galerii.</p>
+      )}
+    </div>
+  );
+}
+
+const emptyTestimonial = {
+  name: "",
+  textCs: "",
+  textUk: "",
+  project: "",
+  rating: 5,
+  featured: true,
+};
+
+function AdminTestimonials() {
+  const { data: testimonials, isLoading } = useListAdminTestimonials();
+  const createTestimonial = useCreateTestimonial();
+  const updateTestimonial = useUpdateTestimonial();
+  const deleteTestimonial = useDeleteTestimonial();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [isAdding, setIsAdding] = useState(false);
+  const [form, setForm] = useState(emptyTestimonial);
+
+  const refreshTestimonials = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: getListAdminTestimonialsQueryKey() }),
+      queryClient.invalidateQueries({ queryKey: getListTestimonialsQueryKey() }),
+    ]);
+  };
+
+  const handleCreate = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    createTestimonial.mutate(
+      {
+        data: {
+          ...form,
+          project: form.project.trim() || undefined,
+          rating: Number(form.rating),
+        },
+      },
+      {
+        onSuccess: async () => {
+          await refreshTestimonials();
+          setForm(emptyTestimonial);
+          setIsAdding(false);
+          toast({
+            title: "Reference přidána",
+            description: "Nová reference je nyní uložená a podle nastavení viditelná na webu.",
+          });
+        },
+        onError: () => {
+          toast({
+            title: "Uložení se nezdařilo",
+            description: "Zkontrolujte vyplněné údaje a zkuste to znovu.",
+            variant: "destructive",
+          });
+        },
+      },
+    );
+  };
+
+  const handleTogglePublished = (id: number, featured: boolean) => {
+    updateTestimonial.mutate(
+      { id, data: { featured: !featured } },
+      {
+        onSuccess: refreshTestimonials,
+        onError: () => toast({
+          title: "Změna se nezdařila",
+          description: "Stav zveřejnění se nepodařilo změnit.",
+          variant: "destructive",
+        }),
+      },
+    );
+  };
+
+  const handleDelete = (id: number) => {
+    if (!confirm("Opravdu chcete tuto referenci smazat?")) return;
+    deleteTestimonial.mutate(
+      { id },
+      {
+        onSuccess: async () => {
+          await refreshTestimonials();
+          toast({ title: "Reference smazána" });
+        },
+        onError: () => toast({
+          title: "Smazání se nezdařilo",
+          variant: "destructive",
+        }),
+      },
+    );
+  };
+
+  if (isLoading) return <div>Načítání...</div>;
+
+  return (
+    <div>
+      <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="text-3xl font-display font-bold">Reference klientů</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Přidávejte skutečné zkušenosti klientů a určete, které se zobrazí na hlavní stránce.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            setIsAdding((current) => !current);
+            setForm(emptyTestimonial);
+          }}
+          className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 font-bold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98]"
+        >
+          {isAdding ? "Zrušit" : <><Plus className="h-4 w-4" /> Přidat referenci</>}
+        </button>
+      </div>
+
+      {isAdding && (
+        <form onSubmit={handleCreate} className="mb-8 space-y-5 rounded-lg border border-border bg-card p-5 sm:p-7">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <label className="space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Jméno klienta</span>
+              <input
+                required
+                maxLength={120}
+                value={form.name}
+                onChange={(event) => setForm({ ...form, name: event.target.value })}
+                className="w-full rounded-md border border-border bg-background px-4 py-3 outline-none focus:border-primary"
+                placeholder="Jan Novák"
+              />
+            </label>
+            <label className="space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Projekt / lokalita</span>
+              <input
+                maxLength={160}
+                value={form.project}
+                onChange={(event) => setForm({ ...form, project: event.target.value })}
+                className="w-full rounded-md border border-border bg-background px-4 py-3 outline-none focus:border-primary"
+                placeholder="Rekonstrukce bytu, Praha 8"
+              />
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <label className="space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Text reference (CS)</span>
+              <textarea
+                required
+                minLength={10}
+                maxLength={2000}
+                rows={5}
+                value={form.textCs}
+                onChange={(event) => setForm({ ...form, textCs: event.target.value })}
+                className="w-full resize-y rounded-md border border-border bg-background px-4 py-3 outline-none focus:border-primary"
+                placeholder="Napište zkušenost klienta v češtině…"
+              />
+            </label>
+            <label className="space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Текст відгуку (UK)</span>
+              <textarea
+                required
+                minLength={10}
+                maxLength={2000}
+                rows={5}
+                value={form.textUk}
+                onChange={(event) => setForm({ ...form, textUk: event.target.value })}
+                className="w-full resize-y rounded-md border border-border bg-background px-4 py-3 outline-none focus:border-primary"
+                placeholder="Напишіть відгук українською…"
+              />
+            </label>
+          </div>
+
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <label className="space-y-2">
+              <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">Hodnocení</span>
+              <select
+                value={form.rating}
+                onChange={(event) => setForm({ ...form, rating: Number(event.target.value) })}
+                className="min-w-44 rounded-md border border-border bg-background px-4 py-3 outline-none focus:border-primary"
+              >
+                {[5, 4, 3, 2, 1].map((rating) => (
+                  <option key={rating} value={rating}>{rating} / 5</option>
+                ))}
+              </select>
+            </label>
+            <label className="flex items-center gap-3 rounded-md border border-border bg-background px-4 py-3 text-sm">
+              <input
+                type="checkbox"
+                checked={form.featured}
+                onChange={(event) => setForm({ ...form, featured: event.target.checked })}
+              />
+              Zobrazit na hlavní stránce
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            disabled={createTestimonial.isPending}
+            className="flex min-h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-bold text-primary-foreground disabled:opacity-60"
+          >
+            {createTestimonial.isPending ? "Ukládám…" : "Uložit referenci"}
+          </button>
+        </form>
+      )}
+
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        {testimonials?.map((testimonial) => (
+          <article key={testimonial.id} className="rounded-lg border border-border bg-card p-5 sm:p-6">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-bold">{testimonial.name}</h2>
+                {testimonial.project && <p className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">{testimonial.project}</p>}
+              </div>
+              <div className="flex shrink-0 gap-0.5 text-[#D4AF37]" aria-label={`${testimonial.rating} z 5`}>
+                {Array.from({ length: testimonial.rating }).map((_, index) => <Star key={index} className="h-4 w-4 fill-current" />)}
+              </div>
+            </div>
+            <p className="line-clamp-4 text-sm leading-6 text-muted-foreground">{testimonial.textCs}</p>
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+              <button
+                type="button"
+                onClick={() => handleTogglePublished(testimonial.id, testimonial.featured)}
+                disabled={updateTestimonial.isPending}
+                className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${testimonial.featured ? "border-primary/40 bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}
+              >
+                {testimonial.featured ? "Zveřejněno" : "Skryto"}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(testimonial.id)}
+                disabled={deleteTestimonial.isPending}
+                className="flex items-center gap-2 text-xs font-bold text-muted-foreground transition-colors hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" /> Smazat
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      {testimonials?.length === 0 && (
+        <div className="rounded-lg border border-dashed border-border bg-card/40 px-6 py-14 text-center">
+          <MessageSquareQuote className="mx-auto mb-4 h-10 w-10 text-primary" />
+          <h2 className="font-bold">Zatím žádné reference</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Klikněte na „Přidat referenci“ a vložte první zkušenost klienta.</p>
+        </div>
       )}
     </div>
   );

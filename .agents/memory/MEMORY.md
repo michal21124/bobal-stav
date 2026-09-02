@@ -1,0 +1,3 @@
+- [GitHub HTML payload filtering](github-html-payload-filtering.md) — connector blocks HTML file payloads; keep the Netlify entry generated during prebuild.
+- [Netlify production architecture](netlify-production-architecture.md) — production is one Netlify project using Functions, Database, and Blobs; no separate API domain.
+- [OpenAPI integer compatibility](openapi-integer-compatibility.md) — Orval emits unsupported zod.int() with this Zod version; model numeric inputs as number and enforce integers server-side.

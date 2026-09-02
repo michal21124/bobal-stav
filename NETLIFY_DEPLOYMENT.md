@@ -38,6 +38,8 @@ Deploy the project. Verify the public API endpoints:
 - `https://bobalstav.cz/api/healthz`
 - `https://bobalstav.cz/api/content`
 - `https://bobalstav.cz/api/gallery`
+- `https://bobalstav.cz/api/contact` (POST from the contact form)
+- `https://bobalstav.cz/api/testimonials` (published client reviews)
 
 Also check each direct SPA/SEO route:
 
@@ -47,6 +49,18 @@ Also check each direct SPA/SEO route:
 - `/o-nas`
 - `/kontakt`
 - `/admin`
+
+The contact form stores valid enquiries in the `contact_messages` table created
+by migration `002_create_contact_messages_table.sql`. It accepts a name, valid
+email address, optional phone and service, and a message. The public endpoint
+uses a honeypot field and server-side length/email validation; no credentials
+are exposed in the browser. The business email shown on the contact page is
+`bobalstav.cz@gmail.com`.
+
+Client reviews are stored in the `testimonials` table created by
+`003_create_testimonials_table.sql`. Public visitors receive only reviews marked
+as published; creating, changing, deleting, and listing all reviews requires an
+authenticated admin session.
 
 The admin gallery accepts raw JPG, PNG, and WebP uploads up to **5 MiB**. This
 limit remains below Netlify Functions' documented 6 MB request payload limit.

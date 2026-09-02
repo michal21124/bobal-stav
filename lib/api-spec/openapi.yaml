@@ -18,6 +18,8 @@ tags:
     description: Admin dashboard summaries
   - name: storage
     description: Protected image upload and public image serving
+  - name: testimonials
+    description: Public client testimonials and admin management
 paths:
   /healthz:
     get:
@@ -175,6 +177,96 @@ paths:
                 $ref: "#/components/schemas/UploadImageResponse"
         "400":
           description: Invalid image metadata
+        "401":
+          description: Admin authentication required
+  /testimonials:
+    get:
+      operationId: listTestimonials
+      tags: [testimonials]
+      summary: List published testimonials
+      responses:
+        "200":
+          description: Published client testimonials
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Testimonial"
+    post:
+      operationId: createTestimonial
+      tags: [testimonials]
+      summary: Add a client testimonial
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestimonialInput"
+      responses:
+        "201":
+          description: Created testimonial
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Testimonial"
+        "401":
+          description: Admin authentication required
+  /testimonials/{id}:
+    patch:
+      operationId: updateTestimonial
+      tags: [testimonials]
+      summary: Update a client testimonial
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestimonialUpdate"
+      responses:
+        "200":
+          description: Updated testimonial
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Testimonial"
+        "404":
+          description: Testimonial not found
+    delete:
+      operationId: deleteTestimonial
+      tags: [testimonials]
+      summary: Delete a client testimonial
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Testimonial deleted
+        "404":
+          description: Testimonial not found
+  /admin/testimonials:
+    get:
+      operationId: listAdminTestimonials
+      tags: [testimonials]
+      summary: List all testimonials for admin
+      responses:
+        "200":
+          description: All testimonials
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Testimonial"
         "401":
           description: Admin authentication required
   /storage/uploads/request-url:
@@ -373,6 +465,94 @@ components:
         objectPath:
           type: string
           pattern: "^/objects/"
+    Testimonial:
+      type: object
+      required:
+        - id
+        - name
+        - textCs
+        - textUk
+        - rating
+        - featured
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        textCs:
+          type: string
+        textUk:
+          type: string
+        project:
+          type: ["string", "null"]
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+        featured:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    TestimonialInput:
+      type: object
+      required:
+        - name
+        - textCs
+        - textUk
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        textCs:
+          type: string
+          minLength: 10
+          maxLength: 2000
+        textUk:
+          type: string
+          minLength: 10
+          maxLength: 2000
+        project:
+          type: string
+          maxLength: 160
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+          default: 5
+        featured:
+          type: boolean
+          default: true
+    TestimonialUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        textCs:
+          type: string
+          minLength: 10
+          maxLength: 2000
+        textUk:
+          type: string
+          minLength: 10
+          maxLength: 2000
+        project:
+          type: string
+          maxLength: 160
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+        featured:
+          type: boolean
     RequestUploadUrlBody:
       type: object
       required: [name, size, contentType]

@@ -167,6 +167,149 @@ export const UploadGalleryImageResponse = zod.object({
 
 
 /**
+ * @summary List published testimonials
+ */
+export const listTestimonialsResponseRatingMax = 5;
+
+
+
+export const ListTestimonialsResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "textCs": zod.string(),
+  "textUk": zod.string(),
+  "project": zod.string().nullish(),
+  "rating": zod.number().min(1).max(listTestimonialsResponseRatingMax),
+  "featured": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+export const ListTestimonialsResponse = zod.array(ListTestimonialsResponseItem)
+
+
+/**
+ * @summary Add a client testimonial
+ */
+export const createTestimonialBodyNameMax = 120;
+
+export const createTestimonialBodyTextCsMin = 10;
+export const createTestimonialBodyTextCsMax = 2000;
+
+export const createTestimonialBodyTextUkMin = 10;
+export const createTestimonialBodyTextUkMax = 2000;
+
+export const createTestimonialBodyProjectMax = 160;
+
+export const createTestimonialBodyRatingDefault = 5;
+export const createTestimonialBodyRatingMax = 5;
+
+export const createTestimonialBodyFeaturedDefault = true;
+
+export const CreateTestimonialBody = zod.object({
+  "name": zod.string().min(1).max(createTestimonialBodyNameMax),
+  "textCs": zod.string().min(createTestimonialBodyTextCsMin).max(createTestimonialBodyTextCsMax),
+  "textUk": zod.string().min(createTestimonialBodyTextUkMin).max(createTestimonialBodyTextUkMax),
+  "project": zod.string().max(createTestimonialBodyProjectMax).optional(),
+  "rating": zod.number().min(1).max(createTestimonialBodyRatingMax).default(createTestimonialBodyRatingDefault),
+  "featured": zod.boolean().default(createTestimonialBodyFeaturedDefault)
+})
+
+export const createTestimonialResponseRatingMax = 5;
+
+
+
+export const CreateTestimonialResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "textCs": zod.string(),
+  "textUk": zod.string(),
+  "project": zod.string().nullish(),
+  "rating": zod.number().min(1).max(createTestimonialResponseRatingMax),
+  "featured": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update a client testimonial
+ */
+export const UpdateTestimonialParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const updateTestimonialBodyNameMax = 120;
+
+export const updateTestimonialBodyTextCsMin = 10;
+export const updateTestimonialBodyTextCsMax = 2000;
+
+export const updateTestimonialBodyTextUkMin = 10;
+export const updateTestimonialBodyTextUkMax = 2000;
+
+export const updateTestimonialBodyProjectMax = 160;
+
+export const updateTestimonialBodyRatingMax = 5;
+
+
+
+export const UpdateTestimonialBody = zod.object({
+  "name": zod.string().min(1).max(updateTestimonialBodyNameMax).optional(),
+  "textCs": zod.string().min(updateTestimonialBodyTextCsMin).max(updateTestimonialBodyTextCsMax).optional(),
+  "textUk": zod.string().min(updateTestimonialBodyTextUkMin).max(updateTestimonialBodyTextUkMax).optional(),
+  "project": zod.string().max(updateTestimonialBodyProjectMax).optional(),
+  "rating": zod.number().min(1).max(updateTestimonialBodyRatingMax).optional(),
+  "featured": zod.boolean().optional()
+})
+
+export const updateTestimonialResponseRatingMax = 5;
+
+
+
+export const UpdateTestimonialResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "textCs": zod.string(),
+  "textUk": zod.string(),
+  "project": zod.string().nullish(),
+  "rating": zod.number().min(1).max(updateTestimonialResponseRatingMax),
+  "featured": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a client testimonial
+ */
+export const DeleteTestimonialParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteTestimonialResponse = zod.void()
+
+
+/**
+ * @summary List all testimonials for admin
+ */
+export const listAdminTestimonialsResponseRatingMax = 5;
+
+
+
+export const ListAdminTestimonialsResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "textCs": zod.string(),
+  "textUk": zod.string(),
+  "project": zod.string().nullish(),
+  "rating": zod.number().min(1).max(listAdminTestimonialsResponseRatingMax),
+  "featured": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+export const ListAdminTestimonialsResponse = zod.array(ListAdminTestimonialsResponseItem)
+
+
+/**
  * Legacy Replit-only endpoint retained for the old API artifact. It is not implemented by the Netlify Function; use `/storage/uploads`.
  * @deprecated
  * @summary Legacy presigned image upload URL

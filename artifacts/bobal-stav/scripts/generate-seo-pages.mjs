@@ -53,6 +53,36 @@ const pages = [
     description: "Kompletní rekonstrukce, zednické práce, sádrokartony, omítky, malování, dlažby, betonáže, fasády a zateplení v Praze.",
   },
   {
+    route: "/sluzby/rekonstrukce",
+    title: "Rekonstrukce bytů a domů Praha | Bobal Stav",
+    description: "Kompletní rekonstrukce bytů, domů a místností v Praze. Bobal Stav zajistí koordinaci prací od přípravy po finální dokončení.",
+  },
+  {
+    route: "/sluzby/zednicke-prace",
+    title: "Zednické práce Praha | Bobal Stav",
+    description: "Přesné zdění, opravy konstrukcí, příčky a betonářské práce pro rekonstrukce i novostavby v Praze a okolí.",
+  },
+  {
+    route: "/sluzby/sadrokarton-omitky",
+    title: "Sádrokartony a omítky Praha | Bobal Stav",
+    description: "Sádrokartonové konstrukce, omítky, štukování a příprava rovných povrchů pro dokončovací práce v Praze.",
+  },
+  {
+    route: "/sluzby/malovani-obklady-dlazby",
+    title: "Malování, obklady a dlažby Praha | Bobal Stav",
+    description: "Precizní malování, obklady a dlažby v koupelnách, kuchyních, interiérech i exteriérech v Praze a okolí.",
+  },
+  {
+    route: "/sluzby/zamkova-dlazba-beton",
+    title: "Zámková dlažba a betonářské práce Praha | Bobal Stav",
+    description: "Chodníky, terasy, vjezdy a betonové plochy s kvalitní přípravou podkladu a dlouhou životností.",
+  },
+  {
+    route: "/sluzby/fasady-zatepleni-dokoncovaci-prace",
+    title: "Fasády a zateplení Praha | Bobal Stav",
+    description: "Fasádní úpravy, zateplení a dokončovací práce pro lepší vzhled, komfort a energetickou úspornost domu.",
+  },
+  {
     route: "/projekty",
     title: "Realizované stavební projekty Praha | Bobal Stav",
     description: "Prohlédněte si realizované rekonstrukce, koupelny, fasády, dlažby a další stavební projekty Bobal Stav v Praze a okolí.",

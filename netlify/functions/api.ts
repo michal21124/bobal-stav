@@ -202,6 +202,19 @@ function galleryItem(row: Record<string, unknown>) {
     featured: row.featured,
   };
 }
+function testimonialItem(row: Record<string, unknown>) {
+  return {
+    id: Number(row.id),
+    name: String(row.name),
+    textCs: String(row.text_cs),
+    textUk: String(row.text_uk),
+    project: row.project == null ? null : String(row.project),
+    rating: Number(row.rating),
+    featured: row.featured === true,
+    createdAt: new Date(String(row.created_at)).toISOString(),
+    updatedAt: new Date(String(row.updated_at)).toISOString(),
+  };
+}
 function contentItem(row: Record<string, unknown>) {
   return {
     companyName: row.company_name,
@@ -226,6 +239,11 @@ function validStrings(data: Record<string, unknown>, fields: string[]) {
   return fields.every(
     (field) => typeof data[field] === "string" && data[field].trim().length > 0,
   );
+}
+function validEmail(value: unknown) {
+  return typeof value === "string" &&
+    value.trim().length <= 254 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 async function ensureContent() {
   const sql = getDatabase().sql;
@@ -274,6 +292,34 @@ export default async (request: Request): Promise<Response> => {
       return json({ status: "ok" });
     if (request.method === "GET" && path === "/content")
       return json(contentItem(await ensureContent()));
+    if (request.method === "POST" && path === "/contact") {
+      const data = await body(request);
+      if (!data) return json({ error: "Invalid contact form body" }, 400);
+
+      // Honeypot submissions look successful to automated senders but are not stored.
+      if (typeof data.website === "string" && data.website.trim().length > 0)
+        return json({ received: true }, 201);
+
+      const name = typeof data.name === "string" ? data.name.trim() : "";
+      const email = typeof data.email === "string" ? data.email.trim() : "";
+      const phone = typeof data.phone === "string" ? data.phone.trim() : "";
+      const service = typeof data.service === "string" ? data.service.trim() : "";
+      const message = typeof data.message === "string" ? data.message.trim() : "";
+      if (
+        name.length < 2 || name.length > 120 ||
+        !validEmail(email) ||
+        phone.length > 40 ||
+        service.length > 120 ||
+        message.length < 10 || message.length > 5000
+      )
+        return json({ error: "Please check the required fields." }, 400);
+
+      await getDatabase().sql`
+        INSERT INTO contact_messages (name, email, phone, service, message)
+        VALUES (${name}, ${email}, ${phone || null}, ${service || null}, ${message})
+      `;
+      return json({ received: true }, 201);
+    }
     if (request.method === "PATCH" && path === "/content") {
       if (!admin(request)) return json({ error: "Unauthorized" }, 401);
       const data = await body(request);
@@ -367,6 +413,105 @@ export default async (request: Request): Promise<Response> => {
       return deleted
         ? new Response(null, { status: 204 })
         : json({ error: "Gallery item not found" }, 404);
+    }
+    if (request.method === "GET" && path === "/testimonials") {
+      const rows = await getDatabase()
+        .sql`SELECT * FROM testimonials WHERE featured = TRUE ORDER BY created_at DESC`;
+      return json(rows.map((row) => testimonialItem(row as Record<string, unknown>)));
+    }
+    if (request.method === "GET" && path === "/admin/testimonials") {
+      if (!admin(request)) return json({ error: "Unauthorized" }, 401);
+      const rows = await getDatabase()
+        .sql`SELECT * FROM testimonials ORDER BY created_at DESC`;
+      return json(rows.map((row) => testimonialItem(row as Record<string, unknown>)));
+    }
+    const testimonialMatch = path.match(/^\/testimonials\/(\d+)$/);
+    if (
+      (request.method === "POST" && path === "/testimonials") ||
+      (testimonialMatch && request.method === "PATCH")
+    ) {
+      if (!admin(request)) return json({ error: "Unauthorized" }, 401);
+      const data = await body(request);
+      if (!data) return json({ error: "Invalid testimonial body" }, 400);
+      const sql = getDatabase().sql;
+
+      if (request.method === "POST") {
+        const rating = data.rating === undefined ? 5 : Number(data.rating);
+        if (
+          !validStrings(data, ["name", "textCs", "textUk"]) ||
+          String(data.name).length > 120 ||
+          String(data.textCs).length < 10 ||
+          String(data.textCs).length > 2000 ||
+          String(data.textUk).length < 10 ||
+          String(data.textUk).length > 2000 ||
+          (data.project !== undefined && typeof data.project !== "string") ||
+          (typeof data.project === "string" && data.project.length > 160) ||
+          !Number.isInteger(rating) ||
+          rating < 1 ||
+          rating > 5 ||
+          (data.featured !== undefined && typeof data.featured !== "boolean")
+        )
+          return json({ error: "Invalid testimonial body" }, 400);
+        const project =
+          typeof data.project === "string" && data.project.trim()
+            ? data.project.trim()
+            : null;
+        const [created] = await sql`
+          INSERT INTO testimonials (name, text_cs, text_uk, project, rating, featured)
+          VALUES (${String(data.name).trim()}, ${String(data.textCs).trim()}, ${String(data.textUk).trim()}, ${project}, ${rating}, ${data.featured ?? true})
+          RETURNING *
+        `;
+        return json(testimonialItem(created as Record<string, unknown>), 201);
+      }
+
+      const [existing] =
+        await sql`SELECT * FROM testimonials WHERE id=${Number(testimonialMatch![1])}`;
+      if (!existing) return json({ error: "Testimonial not found" }, 404);
+      const current = existing as Record<string, unknown>;
+      const merged = {
+        name: current.name,
+        textCs: current.text_cs,
+        textUk: current.text_uk,
+        project: current.project,
+        rating: current.rating,
+        featured: current.featured,
+        ...data,
+      };
+      const rating = Number(merged.rating);
+      if (
+        !validStrings(merged, ["name", "textCs", "textUk"]) ||
+        String(merged.name).length > 120 ||
+        String(merged.textCs).length < 10 ||
+        String(merged.textCs).length > 2000 ||
+        String(merged.textUk).length < 10 ||
+        String(merged.textUk).length > 2000 ||
+        (merged.project !== null && typeof merged.project !== "string") ||
+        (typeof merged.project === "string" && merged.project.length > 160) ||
+        !Number.isInteger(rating) ||
+        rating < 1 ||
+        rating > 5 ||
+        typeof merged.featured !== "boolean"
+      )
+        return json({ error: "Invalid testimonial body" }, 400);
+      const project =
+        typeof merged.project === "string" && merged.project.trim()
+          ? merged.project.trim()
+          : null;
+      const [updated] = await sql`
+        UPDATE testimonials
+        SET name=${String(merged.name).trim()}, text_cs=${String(merged.textCs).trim()}, text_uk=${String(merged.textUk).trim()}, project=${project}, rating=${rating}, featured=${merged.featured}, updated_at=NOW()
+        WHERE id=${Number(testimonialMatch![1])}
+        RETURNING *
+      `;
+      return json(testimonialItem(updated as Record<string, unknown>));
+    }
+    if (testimonialMatch && request.method === "DELETE") {
+      if (!admin(request)) return json({ error: "Unauthorized" }, 401);
+      const [deleted] = await getDatabase()
+        .sql`DELETE FROM testimonials WHERE id=${Number(testimonialMatch[1])} RETURNING id`;
+      return deleted
+        ? new Response(null, { status: 204 })
+        : json({ error: "Testimonial not found" }, 404);
     }
     if (request.method === "GET" && path === "/admin/session")
       return json({ authenticated: admin(request) });

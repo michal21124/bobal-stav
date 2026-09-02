@@ -1,9 +1,11 @@
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useGetSiteContent } from "@workspace/api-client-react";
+import { localizeText } from "@/contexts/LanguageContext";
+import { getServiceHref, serviceDefinitions } from "@/data/services";
 
 export function Footer() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { data: content } = useGetSiteContent();
 
   if (!content) return null;
@@ -56,6 +58,13 @@ export function Footer() {
                   {t("Služby", "Послуги")}
                 </Link>
               </li>
+              {serviceDefinitions.map((service, index) => (
+                <li key={service.slug}>
+                  <Link href={getServiceHref(service.titleCs, index)} className="text-muted-foreground hover:text-primary text-xs transition-colors uppercase tracking-wider">
+                    {localizeText(`${service.titleCs} / ${service.titleUk}`, language)}
+                  </Link>
+                </li>
+              ))}
               <li>
                 <Link href="/projekty" className="text-muted-foreground hover:text-primary text-sm transition-colors uppercase tracking-wider font-semibold">
                   {t("Projekty", "Проєкти")}

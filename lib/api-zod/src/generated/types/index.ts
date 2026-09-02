@@ -16,4 +16,7 @@ export * from './requestUploadUrlBodyContentType';
 export * from './requestUploadUrlResponse';
 export * from './siteContent';
 export * from './siteContentUpdate';
+export * from './testimonial';
+export * from './testimonialInput';
+export * from './testimonialUpdate';
 export * from './uploadImageResponse';

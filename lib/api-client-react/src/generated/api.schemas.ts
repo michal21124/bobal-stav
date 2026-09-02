@@ -78,6 +78,75 @@ export interface UploadImageResponse {
   objectPath: string;
 }
 
+export interface Testimonial {
+  id: number;
+  name: string;
+  textCs: string;
+  textUk: string;
+  /** @nullable */
+  project?: string | null;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
+  featured: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TestimonialInput {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  name: string;
+  /**
+     * @minLength 10
+     * @maxLength 2000
+     */
+  textCs: string;
+  /**
+     * @minLength 10
+     * @maxLength 2000
+     */
+  textUk: string;
+  /** @maxLength 160 */
+  project?: string;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating?: number;
+  featured?: boolean;
+}
+
+export interface TestimonialUpdate {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  name?: string;
+  /**
+     * @minLength 10
+     * @maxLength 2000
+     */
+  textCs?: string;
+  /**
+     * @minLength 10
+     * @maxLength 2000
+     */
+  textUk?: string;
+  /** @maxLength 160 */
+  project?: string;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating?: number;
+  featured?: boolean;
+}
+
 export type RequestUploadUrlBodyContentType = typeof RequestUploadUrlBodyContentType[keyof typeof RequestUploadUrlBodyContentType];
 
 

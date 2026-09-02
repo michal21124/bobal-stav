@@ -19,3 +19,5 @@
 
 export * from "./site-content";
 export * from "./gallery";
+export * from "./contact-messages";
+export * from "./testimonials";
