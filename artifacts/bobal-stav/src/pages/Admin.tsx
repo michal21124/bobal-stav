@@ -6,6 +6,7 @@ import {
   useUpdateSiteContent,
   useListGalleryItems,
   useCreateGalleryItem,
+  useUpdateGalleryItem,
   useDeleteGalleryItem,
   getGetSiteContentQueryKey,
   getListGalleryItemsQueryKey,
@@ -33,6 +34,8 @@ import {
   CheckCircle2,
   MessageSquareQuote,
   Star,
+  Pencil,
+  X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiUrl } from "@/lib/api-url";
@@ -531,10 +534,13 @@ function AdminGallery() {
   const { data: items, isLoading } = useListGalleryItems();
   const deleteItem = useDeleteGalleryItem();
   const createItem = useCreateGalleryItem();
+  const updateItem = useUpdateGalleryItem();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const [isAdding, setIsAdding] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<number | null>(null);
+  const [editingTitles, setEditingTitles] = useState({ titleCs: "", titleUk: "" });
   const [isUploading, setIsUploading] = useState(false);
   const [isSavingBatch, setIsSavingBatch] = useState(false);
   const [pendingPhotos, setPendingPhotos] = useState<PendingPhoto[]>([]);
@@ -568,6 +574,45 @@ function AdminGallery() {
           },
         },
       );
+    }
+  };
+
+  const startEditing = (item: NonNullable<typeof items>[number]) => {
+    setEditingItemId(item.id);
+    setEditingTitles({ titleCs: item.titleCs, titleUk: item.titleUk });
+  };
+
+  const cancelEditing = () => {
+    setEditingItemId(null);
+    setEditingTitles({ titleCs: "", titleUk: "" });
+  };
+
+  const handleUpdateTitle = async (id: number) => {
+    const titleCs = editingTitles.titleCs.trim();
+    const titleUk = editingTitles.titleUk.trim();
+    if (!titleCs || !titleUk) {
+      toast({
+        title: "Chybí název",
+        description: "Vyplňte název v češtině i ukrajinštině.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await updateItem.mutateAsync({ id, data: { titleCs, titleUk } });
+      await queryClient.invalidateQueries({ queryKey: getListGalleryItemsQueryKey() });
+      cancelEditing();
+      toast({
+        title: "Uloženo",
+        description: "Názvy fotografie byly aktualizovány.",
+      });
+    } catch {
+      toast({
+        title: "Chyba",
+        description: "Názvy se nepodařilo uložit. Zkuste to prosím znovu.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -971,16 +1016,75 @@ function AdminGallery() {
               )}
             </div>
             <div className="p-4">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-bold">{item.titleCs}</h3>
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  disabled={deleteItem.isPending}
-                  className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+              {editingItemId === item.id ? (
+                <div className="space-y-3">
+                  <label className="block">
+                    <span className="mb-1 block text-xs text-muted-foreground">Název (CS)</span>
+                    <input
+                      type="text"
+                      value={editingTitles.titleCs}
+                      onChange={(event) => setEditingTitles((current) => ({ ...current, titleCs: event.target.value }))}
+                      className="w-full rounded-md border border-border bg-background p-2 text-sm focus:border-primary focus:outline-none"
+                      maxLength={200}
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-xs text-muted-foreground">Název (UK)</span>
+                    <input
+                      type="text"
+                      value={editingTitles.titleUk}
+                      onChange={(event) => setEditingTitles((current) => ({ ...current, titleUk: event.target.value }))}
+                      className="w-full rounded-md border border-border bg-background p-2 text-sm focus:border-primary focus:outline-none"
+                      maxLength={200}
+                    />
+                  </label>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateTitle(item.id)}
+                      disabled={updateItem.isPending}
+                      className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-60"
+                    >
+                      {updateItem.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                      Uložit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelEditing}
+                      disabled={updateItem.isPending}
+                      className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-bold text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-60"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      Zrušit
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-bold">{item.titleCs}</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">{item.titleUk}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => startEditing(item)}
+                      className="p-1 text-muted-foreground transition-colors hover:text-primary"
+                      aria-label={`Upravit název ${item.titleCs}`}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      disabled={deleteItem.isPending}
+                      className="p-1 text-muted-foreground transition-colors hover:text-destructive"
+                      aria-label={`Smazat ${item.titleCs}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
               <p className="text-xs text-muted-foreground mb-1">
                 {item.category} • {item.location}
               </p>

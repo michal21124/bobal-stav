@@ -371,6 +371,9 @@ export default function Home() {
                 
                 <div className="absolute inset-0 p-10 flex flex-col justify-end">
                   <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                    <h3 className="mb-4 text-2xl font-display font-bold uppercase tracking-tight text-foreground drop-shadow-md md:text-3xl">
+                      {language === "cs" ? project.titleCs : project.titleUk}
+                    </h3>
                     <span className="text-[10px] text-primary font-bold uppercase tracking-[0.2em] mb-4 block bg-background/90 w-fit px-3 py-1 rounded-md">
                       {localizeText(project.category, language)}
                     </span>
