@@ -108,7 +108,8 @@ function replaceMeta(html, attribute, key, value) {
 }
 
 function buildPageHtml(source, page) {
-  const canonical = `https://bobalstav.cz${page.route}`;
+  const canonicalRoute = page.route === "/" ? "/" : `${page.route}/`;
+  const canonical = `https://bobalstav.cz${canonicalRoute}`;
   let html = source.replace(/<title>.*?<\/title>/, `<title>${page.title}</title>`);
 
   html = replaceMeta(html, "name", "description", page.description);

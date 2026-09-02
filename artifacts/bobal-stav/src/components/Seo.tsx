@@ -90,10 +90,11 @@ export function Seo() {
   const { language } = useLanguage();
 
   useEffect(() => {
-    const isAdmin = location.startsWith("/admin");
-    const serviceMeta = servicePageMeta[location];
-    const isPublicRoute = location in pageMeta || Boolean(serviceMeta);
-    const route = isPublicRoute ? location as keyof typeof pageMeta : "/";
+    const normalizedLocation = location.length > 1 ? location.replace(/\/+$/, "") : location;
+    const isAdmin = normalizedLocation.startsWith("/admin");
+    const serviceMeta = servicePageMeta[normalizedLocation];
+    const isPublicRoute = normalizedLocation in pageMeta || Boolean(serviceMeta);
+    const route = isPublicRoute ? normalizedLocation as keyof typeof pageMeta : "/";
     const isNoIndex = isAdmin || !isPublicRoute;
     const meta = isAdmin
       ? {
@@ -106,7 +107,7 @@ export function Seo() {
             title: language === "cs" ? "Stránka nenalezena | Bobal Stav" : "Сторінку не знайдено | Bobal Stav",
             description: language === "cs" ? "Požadovaná stránka nebyla nalezena." : "Запитану сторінку не знайдено.",
           };
-    const canonicalPath = serviceMeta ? location : route === "/" ? "/" : route;
+    const canonicalPath = route === "/" ? "/" : `${route}/`;
     const canonicalUrl = `${SITE_URL}${canonicalPath}`;
 
     document.documentElement.lang = language === "cs" ? "cs-CZ" : "uk-UA";
