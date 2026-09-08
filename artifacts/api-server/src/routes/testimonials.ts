@@ -7,6 +7,8 @@ import {
   DeleteTestimonialParams,
   ListAdminTestimonialsResponse,
   ListTestimonialsResponse,
+  SubmitTestimonialBody,
+  SubmitTestimonialResponse,
   UpdateTestimonialBody,
   UpdateTestimonialParams,
   UpdateTestimonialResponse,
@@ -30,6 +32,33 @@ router.get("/admin/testimonials", requireAdmin, async (_req, res): Promise<void>
     .from(testimonialsTable)
     .orderBy(desc(testimonialsTable.createdAt));
   res.json(ListAdminTestimonialsResponse.parse(testimonials));
+});
+
+router.post("/testimonial-submissions", async (req, res): Promise<void> => {
+  const parsed = SubmitTestimonialBody.safeParse(req.body);
+  if (!parsed.success || !Number.isInteger(parsed.data?.rating)) {
+    res.status(400).json({ error: "Invalid testimonial submission." });
+    return;
+  }
+  if (parsed.data.website) {
+    res.status(202).json(SubmitTestimonialResponse.parse({ accepted: true }));
+    return;
+  }
+  const name = parsed.data.name.trim();
+  const text = parsed.data.text.trim();
+  if (name.length < 2 || text.length < 10) {
+    res.status(400).json({ error: "Invalid testimonial submission." });
+    return;
+  }
+  await db.insert(testimonialsTable).values({
+    name,
+    textCs: text,
+    textUk: text,
+    rating: parsed.data.rating,
+    featured: false,
+    project: null,
+  });
+  res.status(202).json(SubmitTestimonialResponse.parse({ accepted: true }));
 });
 
 router.post("/testimonials", requireAdmin, async (req, res): Promise<void> => {

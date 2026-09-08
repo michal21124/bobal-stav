@@ -5,6 +5,7 @@ import { useGetSiteContent, useListGalleryItems, useListTestimonials } from "@wo
 import { motion, useInView, useReducedMotion } from "framer-motion";
 import { ArrowRight, Hammer, Ruler, ShieldCheck, SquareSquare, PaintRoller, Axe, Quote, Star, Phone } from "lucide-react";
 import { getServiceHref } from "@/data/services";
+import { ReviewSubmissionForm } from "@/components/ReviewSubmissionForm";
 
 const HERO_IMAGES = [
   { src: "/hero-facade.jpeg", altCs: "Fasáda domu během rekonstrukce", altUk: "Фасад будинку під час реконструкції" },
@@ -459,6 +460,8 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      <ReviewSubmissionForm />
       
       {/* Heavy Architectural CTA */}
       <section className="py-32 relative bg-background border-t border-border">

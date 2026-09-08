@@ -232,6 +232,33 @@ export const CreateTestimonialResponse = zod.object({
 
 
 /**
+ * @summary Submit a client testimonial for moderation
+ */
+export const submitTestimonialBodyNameMin = 2;
+export const submitTestimonialBodyNameMax = 120;
+
+export const submitTestimonialBodyTextMin = 10;
+export const submitTestimonialBodyTextMax = 2000;
+
+export const submitTestimonialBodyRatingMax = 5;
+
+export const submitTestimonialBodyWebsiteMax = 200;
+
+
+
+export const SubmitTestimonialBody = zod.object({
+  "name": zod.string().min(submitTestimonialBodyNameMin).max(submitTestimonialBodyNameMax),
+  "text": zod.string().min(submitTestimonialBodyTextMin).max(submitTestimonialBodyTextMax),
+  "rating": zod.number().min(1).max(submitTestimonialBodyRatingMax),
+  "website": zod.string().max(submitTestimonialBodyWebsiteMax).optional()
+})
+
+export const SubmitTestimonialResponse = zod.object({
+  "accepted": zod.boolean()
+})
+
+
+/**
  * @summary Update a client testimonial
  */
 export const UpdateTestimonialParams = zod.object({

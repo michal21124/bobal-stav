@@ -425,6 +425,35 @@ export default async (request: Request): Promise<Response> => {
         .sql`SELECT * FROM testimonials ORDER BY created_at DESC`;
       return json(rows.map((row) => testimonialItem(row as Record<string, unknown>)));
     }
+    if (request.method === "POST" && path === "/testimonial-submissions") {
+      const data = await body(request);
+      if (!data) return json({ error: "Invalid testimonial submission" }, 400);
+      const rating = Number(data.rating);
+      if (
+        typeof data.name !== "string" ||
+        data.name.trim().length < 2 ||
+        data.name.length > 120 ||
+        typeof data.text !== "string" ||
+        data.text.trim().length < 10 ||
+        data.text.length > 2000 ||
+        !Number.isInteger(rating) ||
+        rating < 1 ||
+        rating > 5
+      ) {
+        return json({ error: "Invalid testimonial submission" }, 400);
+      }
+      if (typeof data.website === "string" && data.website.length > 0) {
+        return json({ accepted: true }, 202);
+      }
+      const sql = getDatabase().sql;
+      const name = data.name.trim();
+      const text = data.text.trim();
+      await sql`
+        INSERT INTO testimonials (name, text_cs, text_uk, project, rating, featured)
+        VALUES (${name}, ${text}, ${text}, NULL, ${rating}, FALSE)
+      `;
+      return json({ accepted: true }, 202);
+    }
     const testimonialMatch = path.match(/^\/testimonials\/(\d+)$/);
     if (
       (request.method === "POST" && path === "/testimonials") ||

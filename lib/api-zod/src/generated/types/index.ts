@@ -18,5 +18,7 @@ export * from './siteContent';
 export * from './siteContentUpdate';
 export * from './testimonial';
 export * from './testimonialInput';
+export * from './testimonialSubmissionInput';
+export * from './testimonialSubmissionResponse';
 export * from './testimonialUpdate';
 export * from './uploadImageResponse';

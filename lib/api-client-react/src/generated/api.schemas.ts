@@ -147,6 +147,30 @@ export interface TestimonialUpdate {
   featured?: boolean;
 }
 
+export interface TestimonialSubmissionInput {
+  /**
+     * @minLength 2
+     * @maxLength 120
+     */
+  name: string;
+  /**
+     * @minLength 10
+     * @maxLength 2000
+     */
+  text: string;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
+  /** @maxLength 200 */
+  website?: string;
+}
+
+export interface TestimonialSubmissionResponse {
+  accepted: boolean;
+}
+
 export type RequestUploadUrlBodyContentType = typeof RequestUploadUrlBodyContentType[keyof typeof RequestUploadUrlBodyContentType];
 
 

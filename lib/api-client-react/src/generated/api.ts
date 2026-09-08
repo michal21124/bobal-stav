@@ -31,6 +31,8 @@ import type {
   SiteContentUpdate,
   Testimonial,
   TestimonialInput,
+  TestimonialSubmissionInput,
+  TestimonialSubmissionResponse,
   TestimonialUpdate,
   UploadImageResponse
 } from './api.schemas';
@@ -874,6 +876,77 @@ export const useCreateTestimonial = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getCreateTestimonialMutationOptions(options));
+    }
+
+export const getSubmitTestimonialUrl = () => {
+
+
+
+
+  return `/api/testimonial-submissions`
+}
+
+/**
+ * @summary Submit a client testimonial for moderation
+ */
+export const submitTestimonial = async (testimonialSubmissionInput: TestimonialSubmissionInput, options?: Parameters<typeof customFetch>[1]): Promise<TestimonialSubmissionResponse> => {
+
+  return customFetch<TestimonialSubmissionResponse>(getSubmitTestimonialUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(testimonialSubmissionInput)
+  }
+);}
+
+
+
+
+
+export const getSubmitTestimonialMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitTestimonial>>, TError,{data: BodyType<TestimonialSubmissionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitTestimonial>>, TError,{data: BodyType<TestimonialSubmissionInput>}, TContext> => {
+
+const mutationKey = ['submitTestimonial'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitTestimonial>>, {data: BodyType<TestimonialSubmissionInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  submitTestimonial(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubmitTestimonialMutationResult = NonNullable<Awaited<ReturnType<typeof submitTestimonial>>>
+    export type SubmitTestimonialMutationBody = BodyType<TestimonialSubmissionInput>
+    export type SubmitTestimonialMutationError = ErrorType<void>
+
+    /**
+ * @summary Submit a client testimonial for moderation
+ */
+export const useSubmitTestimonial = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitTestimonial>>, TError,{data: BodyType<TestimonialSubmissionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof submitTestimonial>>,
+        TError,
+        {data: BodyType<TestimonialSubmissionInput>},
+        TContext
+      > => {
+      return useMutation(getSubmitTestimonialMutationOptions(options));
     }
 
 export const getUpdateTestimonialUrl = (id: number,) => {

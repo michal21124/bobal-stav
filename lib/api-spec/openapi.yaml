@@ -212,6 +212,26 @@ paths:
                 $ref: "#/components/schemas/Testimonial"
         "401":
           description: Admin authentication required
+  /testimonial-submissions:
+    post:
+      operationId: submitTestimonial
+      tags: [testimonials]
+      summary: Submit a client testimonial for moderation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestimonialSubmissionInput"
+      responses:
+        "202":
+          description: Testimonial accepted for moderation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestimonialSubmissionResponse"
+        "400":
+          description: Invalid testimonial submission
   /testimonials/{id}:
     patch:
       operationId: updateTestimonial
@@ -552,6 +572,35 @@ components:
           minimum: 1
           maximum: 5
         featured:
+          type: boolean
+    TestimonialSubmissionInput:
+      type: object
+      required:
+        - name
+        - text
+        - rating
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+        text:
+          type: string
+          minLength: 10
+          maxLength: 2000
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+        website:
+          type: string
+          maxLength: 200
+    TestimonialSubmissionResponse:
+      type: object
+      required:
+        - accepted
+      properties:
+        accepted:
           type: boolean
     RequestUploadUrlBody:
       type: object
