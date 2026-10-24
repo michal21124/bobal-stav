@@ -55,7 +55,7 @@ router.post("/testimonial-submissions", async (req, res): Promise<void> => {
     textCs: text,
     textUk: text,
     rating: parsed.data.rating,
-    featured: false,
+    featured: true,
     project: null,
   });
   res.status(202).json(SubmitTestimonialResponse.parse({ accepted: true }));

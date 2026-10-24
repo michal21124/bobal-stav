@@ -216,7 +216,7 @@ paths:
     post:
       operationId: submitTestimonial
       tags: [testimonials]
-      summary: Submit a client testimonial for moderation
+      summary: Submit and immediately publish a client testimonial
       requestBody:
         required: true
         content:
@@ -225,7 +225,7 @@ paths:
               $ref: "#/components/schemas/TestimonialSubmissionInput"
       responses:
         "202":
-          description: Testimonial accepted for moderation
+          description: Testimonial published
           content:
             application/json:
               schema:

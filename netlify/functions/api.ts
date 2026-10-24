@@ -450,7 +450,7 @@ export default async (request: Request): Promise<Response> => {
       const text = data.text.trim();
       await sql`
         INSERT INTO testimonials (name, text_cs, text_uk, project, rating, featured)
-        VALUES (${name}, ${text}, ${text}, NULL, ${rating}, FALSE)
+        VALUES (${name}, ${text}, ${text}, NULL, ${rating}, TRUE)
       `;
       return json({ accepted: true }, 202);
     }

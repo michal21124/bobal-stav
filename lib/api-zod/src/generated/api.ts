@@ -232,7 +232,7 @@ export const CreateTestimonialResponse = zod.object({
 
 
 /**
- * @summary Submit a client testimonial for moderation
+ * @summary Submit and immediately publish a client testimonial
  */
 export const submitTestimonialBodyNameMin = 2;
 export const submitTestimonialBodyNameMax = 120;

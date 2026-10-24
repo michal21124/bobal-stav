@@ -1313,7 +1313,7 @@ function AdminTestimonials() {
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`rounded-full border px-3 py-1.5 text-xs font-bold ${testimonial.featured ? "border-primary/40 bg-primary/10 text-primary" : "border-amber-500/40 bg-amber-500/10 text-amber-500"}`}>
-                  {testimonial.featured ? "Zveřejněno" : "Čeká na schválení"}
+                  {testimonial.featured ? "Zveřejněno" : "Skryto"}
                 </span>
                 <button
                   type="button"
@@ -1321,7 +1321,7 @@ function AdminTestimonials() {
                   disabled={updateTestimonial.isPending}
                   className="rounded-md border border-border px-3 py-1.5 text-xs font-bold transition-colors hover:border-primary hover:text-primary"
                 >
-                  {testimonial.featured ? "Skrýt" : "Schválit a zveřejnit"}
+                  {testimonial.featured ? "Skrýt" : "Zveřejnit"}
                 </button>
               </div>
               <button
@@ -1330,7 +1330,7 @@ function AdminTestimonials() {
                 disabled={deleteTestimonial.isPending}
                 className="flex items-center gap-2 text-xs font-bold text-muted-foreground transition-colors hover:text-destructive"
               >
-                <Trash2 className="h-4 w-4" /> {testimonial.featured ? "Smazat" : "Odmítnout"}
+                <Trash2 className="h-4 w-4" /> Smazat
               </button>
             </div>
           </article>

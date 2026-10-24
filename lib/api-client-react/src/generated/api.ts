@@ -887,7 +887,7 @@ export const getSubmitTestimonialUrl = () => {
 }
 
 /**
- * @summary Submit a client testimonial for moderation
+ * @summary Submit and immediately publish a client testimonial
  */
 export const submitTestimonial = async (testimonialSubmissionInput: TestimonialSubmissionInput, options?: Parameters<typeof customFetch>[1]): Promise<TestimonialSubmissionResponse> => {
 
@@ -936,7 +936,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type SubmitTestimonialMutationError = ErrorType<void>
 
     /**
- * @summary Submit a client testimonial for moderation
+ * @summary Submit and immediately publish a client testimonial
  */
 export const useSubmitTestimonial = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitTestimonial>>, TError,{data: BodyType<TestimonialSubmissionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}

@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Star } from "lucide-react";
-import { useSubmitTestimonial } from "@workspace/api-client-react";
+import { getListTestimonialsQueryKey, useSubmitTestimonial } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export function ReviewSubmissionForm() {
   const { t } = useLanguage();
   const submitTestimonial = useSubmitTestimonial();
+  const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [text, setText] = useState("");
   const [rating, setRating] = useState(5);
@@ -23,6 +25,7 @@ export function ReviewSubmissionForm() {
           setText("");
           setRating(5);
           setWebsite("");
+          void queryClient.invalidateQueries({ queryKey: getListTestimonialsQueryKey() });
         },
       },
     );
@@ -40,8 +43,8 @@ export function ReviewSubmissionForm() {
           </h2>
           <p className="mt-6 max-w-xl text-lg font-light leading-8 text-muted-foreground">
             {t(
-              "Vaše recenze se po odeslání zobrazí administrátorovi ke schválení.",
-              "Після надсилання відгук надійде адміністратору на перевірку.",
+              "Vaše recenze se po odeslání automaticky zveřejní na webu.",
+              "Після надсилання ваш відгук автоматично з’явиться на сайті.",
             )}
           </p>
         </div>
@@ -52,7 +55,7 @@ export function ReviewSubmissionForm() {
               <Star className="mb-5 h-10 w-10 fill-primary text-primary" />
               <h3 className="text-2xl font-display font-bold">{t("Děkujeme za recenzi", "Дякуємо за відгук")}</h3>
               <p className="mt-3 text-muted-foreground">
-                {t("Po schválení ji zveřejníme na webu.", "Після підтвердження ми опублікуємо його на сайті.")}
+                {t("Vaše recenze byla zveřejněna na webu.", "Ваш відгук опубліковано на сайті.")}
               </p>
               <button type="button" onClick={() => setSubmitted(false)} className="mt-7 text-sm font-bold text-primary">
                 {t("Napsat další recenzi", "Залишити ще один відгук")}
